@@ -81,4 +81,33 @@ describe("formatShareCard", () => {
     expect(() => formatShareCard({ ...base, trail: [] })).toThrow(/trail/);
     expect(() => formatShareCard({ ...base, trail: undefined })).toThrow(/trail/);
   });
+
+  describe("a long trail", () => {
+    // A determined golfer trims one byte at a time; nothing caps how many
+    // improvements a trail holds. The card is made to be pasted into a group
+    // chat, so it has to stay a glanceable staircase, not a 20-line wall.
+    const long = Array.from({ length: 20 }, (_, i) => 80 - i); // 80 → 61
+    const barsOf = (card) => card.split("\n").filter((line) => /^[🟦🟩]/u.test(line));
+
+    it("stays compact instead of printing a row per cut", () => {
+      const bars = barsOf(formatShareCard({ ...base, trail: long }));
+      expect(bars.length).toBeLessThanOrEqual(8);
+    });
+
+    it("still shows where you started and where you landed", () => {
+      const bars = barsOf(formatShareCard({ ...base, trail: long }));
+      expect(bars[0]).toContain("80");
+      expect(bars[bars.length - 1]).toContain("61");
+      expect([...bars[bars.length - 1]].filter((c) => c === "🟩").length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("reports the true number of cuts even though it elides rows", () => {
+      const card = formatShareCard({ ...base, trail: long });
+      expect(card).toContain("61 bytes (20 cuts)");
+    });
+
+    it("leaves a trail that already fits completely untouched", () => {
+      expect(barsOf(formatShareCard({ ...base, trail: [96, 74, 61] }))).toHaveLength(3);
+    });
+  });
 });
