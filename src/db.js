@@ -5,6 +5,21 @@ const isNode = typeof process !== "undefined" && process.release?.name === "node
 
 let sqlJsPromise;
 
+/**
+ * Absolute on-disk path to one of sql.js's shipped files, for the Node/vitest
+ * side only — the browser gets `sqlWasmUrl` instead.
+ *
+ * Built by string concatenation on purpose. The obvious spelling,
+ * `new URL("../node_modules/...", import.meta.url)`, does not survive: Vite
+ * statically rewrites that exact pattern at transform time into a
+ * webroot-relative asset URL ("/node_modules/..."), which is not a filesystem
+ * path, so sql.js reads it as root-absolute and fails with ENOENT. Keeping
+ * the path out of that pattern is what makes it a real path.
+ */
+function nodeWasmPath(file) {
+  return `${process.cwd()}/node_modules/sql.js/dist/${file}`;
+}
+
 // sql.js ships its engine as a WASM binary. In the browser, Vite's `?url`
 // import resolves it to a hashed, fingerprinted asset URL. Under Node
 // (vitest), that same URL is webroot-relative and not a real filesystem
@@ -12,10 +27,7 @@ let sqlJsPromise;
 function loadSqlJs() {
   if (!sqlJsPromise) {
     sqlJsPromise = initSqlJs({
-      locateFile: (file) =>
-        isNode
-          ? new URL(`../node_modules/sql.js/dist/${file}`, import.meta.url).pathname
-          : sqlWasmUrl,
+      locateFile: (file) => (isNode ? nodeWasmPath(file) : sqlWasmUrl),
     });
   }
   return sqlJsPromise;
