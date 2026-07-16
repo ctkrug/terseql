@@ -77,7 +77,7 @@ export async function executeQuery(sql, setupSql) {
   }
 }
 
-function markup(puzzle, dateLabel) {
+function markup(dateLabel) {
   return `
     <a class="skip-link" href="#query">Skip to the editor</a>
 
@@ -183,7 +183,7 @@ export function createApp({
     day: "numeric",
   });
 
-  root.innerHTML = markup(puzzle, dateLabel);
+  root.innerHTML = markup(dateLabel);
 
   const $ = (id) => root.querySelector(`#${id}`);
   const editor = $("query");
