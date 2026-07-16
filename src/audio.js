@@ -1,4 +1,5 @@
 const MUTE_KEY = "terseql:muted";
+const KEYSTROKE_THROTTLE_S = 0.03;
 
 /**
  * Every voice is synthesized from oscillators and noise at call time — the
@@ -127,7 +128,7 @@ export function createSfx({
   let muted = readMuted();
   // -Infinity, not 0: a fresh AudioContext starts at currentTime 0, so a zero
   // here would throttle away the very first tick.
-  let lastPlayedAt = -Infinity;
+  let lastKeystrokeAt = -Infinity;
 
   function readMuted() {
     try {
@@ -186,10 +187,14 @@ export function createSfx({
       const audio = ensureContext();
       if (!audio) return false;
 
-      // A held-down key shouldn't machine-gun the tick.
-      const now = audio.currentTime;
-      if (name === "keystroke" && now - lastPlayedAt < 0.03) return false;
-      lastPlayedAt = now;
+      // A held-down key shouldn't machine-gun the tick. The window is the
+      // keystroke's own: clocking it on every voice let a Run or a win
+      // swallow the next tick the player typed.
+      if (name === "keystroke") {
+        const now = audio.currentTime;
+        if (now - lastKeystrokeAt < KEYSTROKE_THROTTLE_S) return false;
+        lastKeystrokeAt = now;
+      }
 
       // Chrome starts contexts suspended until a gesture resolves.
       if (audio.state === "suspended" && typeof audio.resume === "function") {

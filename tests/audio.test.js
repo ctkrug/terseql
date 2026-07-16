@@ -119,6 +119,14 @@ describe("createSfx — voices", () => {
     ctx.currentTime = 1;
     expect(sfx.play("keystroke")).toBe(true);
   });
+
+  it("throttles the tick against other keystrokes only, not every voice", () => {
+    const ctx = fakeContext();
+    const sfx = createSfx({ contextFactory: () => ctx, storage });
+    // A Run fires the instant before the player types the next character.
+    expect(sfx.play("run")).toBe(true);
+    expect(sfx.play("keystroke")).toBe(true);
+  });
 });
 
 describe("createSfx — mute", () => {
