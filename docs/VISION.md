@@ -14,7 +14,7 @@ points.
 People who already know SQL reasonably well and enjoy the kind of puzzle where "I got it
 working" is the boring part and "I got it working in 61 bytes" is the actual game — the same
 crowd that does Advent of Code golf leaderboards, Wordle, and byte-count code-golf challenges
-on sites like codegolf.stackexchange.com, but nothing currently gives them a *SQL-specific*
+on sites like codegolf.stackexchange.com, but nothing currently gives them a _SQL-specific_
 version of that loop.
 
 ## The core idea
@@ -26,7 +26,7 @@ no waiting. Correctness is checked against a **hidden suite of fixture databases
 see, not just the visible sample, so a query that merely fits the preview data and doesn't
 generalize still fails. Once you pass, your score is your query's **UTF-8 byte length** — and
 the leaderboard is sorted by that number, ascending. The tension between "correct" and "short"
-*is* the game.
+_is_ the game.
 
 ## Key design decisions
 
@@ -38,18 +38,18 @@ the leaderboard is sorted by that number, ascending. The tension between "correc
 - **Hidden fixtures, not just the visible sample.** Every puzzle ships 1+ additional seeded
   databases the player never sees, covering edge cases the visible sample doesn't (empty
   groups, ties, NULLs, negative values). A query only counts as correct if it matches expected
-  output on *every* fixture. This is the "can't be gamed by hardcoding" property the wow
+  output on _every_ fixture. This is the "can't be gamed by hardcoding" property the wow
   moment depends on — see `docs/DESIGN.md` and the grader tests in `tests/grader.test.js` for
   how it's enforced today.
 - **Score is UTF-8 bytes, not characters.** Prevents gaming the count with multi-byte
   characters that display as "short" but aren't. Computed with `TextEncoder`, tested directly.
 - **One puzzle a day, deterministic.** Same puzzle, same fixtures, for everyone on a given day
   — this is what makes the leaderboard meaningful ("twelve fewer bytes than you thought was
-  possible" only lands if you're solving the *same* problem as everyone else).
+  possible" only lands if you're solving the _same_ problem as everyone else).
 - **Static, serverless solving; a small backend only for the shared leaderboard.** The whole
   solving experience — editor, grading, byte counter, result rendering — is a static site
   (`vite build`, one `dist/` directory, relative asset paths so it can be hosted at a subpath
-  like `apps.charliekrug.com/terseql`). A shared cross-player leaderboard needs *some* backend
+  like `apps.charliekrug.com/terseql`). A shared cross-player leaderboard needs _some_ backend
   to accept and serve submissions, but it's explicitly out of scope for early builds — see
   `docs/BACKLOG.md`. Until then, `src/leaderboard.js` tracks personal bests in `localStorage`
   so the core loop works standalone.
