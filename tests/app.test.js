@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createApp } from "../src/app.js";
+import { createApp, dedent } from "../src/app.js";
 import { dayOne } from "../src/puzzles/day-0001.js";
+import { puzzles } from "../src/puzzles/index.js";
 
 const NOW = new Date("2026-07-16T12:00:00Z");
 
@@ -43,6 +44,42 @@ function mount(overrides = {}) {
 beforeEach(() => {
   document.body.innerHTML = "";
   localStorage.clear();
+});
+
+describe("dedent", () => {
+  it("strips the shared indentation a template literal leaves behind", () => {
+    expect(dedent("\n    CREATE TABLE a (x);\n    CREATE TABLE b (y);\n  ")).toBe(
+      "CREATE TABLE a (x);\nCREATE TABLE b (y);",
+    );
+  });
+
+  it("preserves relative indentation inside the block", () => {
+    expect(dedent("\n    CREATE TABLE a (\n      x INTEGER\n    );\n")).toBe(
+      "CREATE TABLE a (\n  x INTEGER\n);",
+    );
+  });
+
+  it("ignores blank lines when measuring the shared indent", () => {
+    expect(dedent("\n    a\n\n    b\n")).toBe("a\n\nb");
+  });
+
+  it("leaves already-flush text alone", () => {
+    expect(dedent("SELECT 1")).toBe("SELECT 1");
+  });
+
+  it("handles empty and nullish input", () => {
+    expect(dedent("")).toBe("");
+    expect(dedent(null)).toBe("");
+    expect(dedent(undefined)).toBe("");
+  });
+
+  it("renders every authored schema flush to the left margin", () => {
+    for (const puzzle of puzzles) {
+      const lines = dedent(puzzle.schemaSql).split("\n");
+      expect(lines[0]).toBe(lines[0].trimStart());
+      expect(lines.some((l) => l.startsWith("CREATE TABLE"))).toBe(true);
+    }
+  });
 });
 
 describe("createApp", () => {
