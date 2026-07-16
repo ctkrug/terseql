@@ -1,13 +1,60 @@
 const STORAGE_KEY = "terseql:results";
 
+function isPlainObject(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Coerce one stored entry to the shape the rest of the module promises, or
+ * drop it. A byte count is a positive integer by construction, so anything
+ * else means the entry was written by something other than `recordSolve`.
+ *
+ * @returns {{bytes: number, solvedAt: string, trail: number[]} | null}
+ */
+function sanitizeEntry(entry) {
+  if (!isPlainObject(entry)) return null;
+  if (!Number.isInteger(entry.bytes) || entry.bytes <= 0) return null;
+
+  const trail = Array.isArray(entry.trail)
+    ? entry.trail.filter((bytes) => Number.isInteger(bytes) && bytes > 0)
+    : [];
+
+  return {
+    bytes: entry.bytes,
+    solvedAt: typeof entry.solvedAt === "string" ? entry.solvedAt : "",
+    // No usable trail (an entry written before trails existed, or a corrupt
+    // one) still has a best, which is a one-step staircase.
+    trail: trail.length ? trail : [entry.bytes],
+  };
+}
+
+/**
+ * The player's results, guaranteed to be an object of well-formed entries.
+ *
+ * `JSON.parse` succeeding proves nothing about shape: `"null"`, `"[1,2,3]"`
+ * and `'"abc"'` are all valid JSON, and localStorage is hand-editable and
+ * shared with every other script on the origin. This runs at mount, so an
+ * unchecked shape here is a white page rather than a wrong number.
+ */
 function readStore() {
+  let parsed;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    parsed = raw ? JSON.parse(raw) : {};
   } catch {
-    // localStorage unavailable (private mode, SSR, tests) — behave as empty
+    // Unreadable or not JSON: localStorage unavailable (private mode, SSR,
+    // tests), or the value was overwritten with something else entirely.
     return {};
   }
+
+  if (!isPlainObject(parsed)) return {};
+
+  const store = {};
+  for (const [puzzleId, entry] of Object.entries(parsed)) {
+    const clean = sanitizeEntry(entry);
+    if (clean) store[puzzleId] = clean;
+  }
+  return store;
 }
 
 function writeStore(store) {
@@ -38,7 +85,9 @@ export function recordSolve(puzzleId, bytes, solvedAt) {
   if (!existing) {
     store[puzzleId] = { bytes, solvedAt, trail: [bytes] };
   } else if (bytes < existing.bytes) {
-    store[puzzleId] = { bytes, solvedAt, trail: [...(existing.trail ?? [existing.bytes]), bytes] };
+    // readStore guarantees a trail, including for entries written before
+    // trails existed — no need to reconstruct one here.
+    store[puzzleId] = { bytes, solvedAt, trail: [...existing.trail, bytes] };
   }
   writeStore(store);
   return store[puzzleId];
