@@ -19,7 +19,9 @@ export const UNAVAILABLE = {
  * Deliberately stricter than `Number()`, which maps null, "", false and []
  * all to 0 — and 0 is both an impossible score and the best one, so a sloppy
  * coercion would park garbage at the top of the board permanently. Only a
- * real number or a numeric string counts, and it must be positive.
+ * real number or a numeric string counts, and it must be a positive integer:
+ * a query is a whole number of bytes, so 0.5 is as impossible as 0 and sorts
+ * just as unbeatably.
  *
  * @returns {number|null}
  */
@@ -30,7 +32,7 @@ function toBytes(value) {
       : typeof value === "string" && value.trim()
         ? Number(value)
         : NaN;
-  return Number.isFinite(n) && n > 0 ? n : null;
+  return Number.isInteger(n) && n > 0 ? n : null;
 }
 
 /**
