@@ -434,6 +434,39 @@ describe("submit", () => {
     });
   });
 
+  it("only posts a solve that beats your own best", async () => {
+    const leaderboard = {
+      isEnabled: () => true,
+      submit: vi.fn(() => Promise.resolve({ ok: true })),
+      fetchTop: vi.fn(() => Promise.resolve({ ok: true, entries: [] })),
+    };
+    const grade = vi
+      .fn()
+      .mockResolvedValueOnce({ correct: true, bytes: 61, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 80, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 61, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 55, failedFixture: null });
+    const { $, app } = mount({ leaderboard, grade });
+
+    $("#query").value = "SELECT 1";
+    await app.submit();
+    await vi.waitFor(() => expect(leaderboard.submit).toHaveBeenCalledTimes(1));
+
+    // Worse than, then equal to, the best already posted: the board already
+    // knows the 61, so neither is news.
+    await app.submit();
+    await app.submit();
+    expect(leaderboard.submit).toHaveBeenCalledTimes(1);
+
+    await app.submit();
+    await vi.waitFor(() => expect(leaderboard.submit).toHaveBeenCalledTimes(2));
+    expect(leaderboard.submit).toHaveBeenLastCalledWith({
+      puzzleId: dayOne.id,
+      bytes: 55,
+      timestamp: NOW.toISOString(),
+    });
+  });
+
   it("keeps the solve when the board submission fails", async () => {
     const leaderboard = {
       isEnabled: () => true,
