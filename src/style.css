@@ -329,6 +329,32 @@ button:disabled {
   border-color: var(--accent);
 }
 
+/* Quiet by design: the instrument is the page, and these two links are for
+   the visitor who has already finished playing. */
+.appfoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-5);
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: 0.72rem;
+}
+
+.appfoot a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--motion-ui);
+}
+
+.appfoot a:hover {
+  color: var(--accent);
+}
+
+.appfoot a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 /* ── Layout ─────────────────────────────────────────────────────────────── */
 
 .grid {

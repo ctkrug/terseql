@@ -147,6 +147,11 @@ function markup(dateLabel) {
       <aside class="col-board panel" id="board" aria-label="Today's leaderboard"></aside>
     </main>
 
+    <footer class="appfoot">
+      <a href="https://github.com/ctkrug/terseql">Source on GitHub</a>
+      <a href="https://apps.charliekrug.com">More by Charlie Krug &rarr;</a>
+    </footer>
+
     <div class="win-overlay" id="win" hidden></div>
   `;
 }
