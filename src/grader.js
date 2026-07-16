@@ -66,7 +66,6 @@ export async function gradeQuery(query, puzzle) {
     return { correct: false, bytes: 0, failedFixture: null };
   }
   for (const fixture of puzzle.fixtures) {
-    // eslint-disable-next-line no-await-in-loop -- fixtures must short-circuit in order
     const passed = await runAgainstFixture(query, fixture);
     if (!passed) {
       return { correct: false, bytes: byteLength(query), failedFixture: fixture.name };
