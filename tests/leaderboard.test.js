@@ -16,7 +16,29 @@ beforeEach(() => {
 describe("recordSolve", () => {
   it("records a first solve", () => {
     recordSolve("2026-07-16", 61, "2026-07-16T10:00:00Z");
-    expect(getBest("2026-07-16")).toEqual({ bytes: 61, solvedAt: "2026-07-16T10:00:00Z" });
+    expect(getBest("2026-07-16")).toEqual({
+      bytes: 61,
+      solvedAt: "2026-07-16T10:00:00Z",
+      trail: [61],
+    });
+  });
+
+  it("builds a trail of improvements, ignoring non-improvements", () => {
+    recordSolve("2026-07-16", 96, "a");
+    recordSolve("2026-07-16", 74, "b");
+    recordSolve("2026-07-16", 88, "c");
+    recordSolve("2026-07-16", 61, "d");
+    expect(getBest("2026-07-16").trail).toEqual([96, 74, 61]);
+  });
+
+  it("migrates a pre-trail stored entry without losing the best", () => {
+    // Entries written before trails existed have {bytes, solvedAt} only.
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: 80, solvedAt: "old" } }),
+    );
+    recordSolve("2026-07-16", 61, "new");
+    expect(getBest("2026-07-16")).toEqual({ bytes: 61, solvedAt: "new", trail: [80, 61] });
   });
 
   it("keeps the lower byte count when you golf it down", () => {
