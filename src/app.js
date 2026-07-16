@@ -1,7 +1,7 @@
 import { createDatabase, createSeededDatabase } from "./db.js";
 import { byteLength, gradeQuery } from "./grader.js";
 import { getBest, getCurrentStreak, recordSolve } from "./leaderboard.js";
-import { leaderboardClient } from "./remote-leaderboard.js";
+import { UNAVAILABLE, leaderboardClient } from "./remote-leaderboard.js";
 import { formatShareCard } from "./share.js";
 import { sfx as defaultSfx } from "./audio.js";
 import { createByteCounter } from "./ui/byte-counter.js";
@@ -254,7 +254,7 @@ export function createApp({
   async function refreshBoard() {
     const yourBest = getBest(puzzle.id)?.bytes ?? null;
     if (!leaderboard.isEnabled()) {
-      board.showUnavailable("not-configured", { yourBest });
+      board.showUnavailable(UNAVAILABLE.NOT_CONFIGURED, { yourBest });
       return;
     }
     board.showLoading();
