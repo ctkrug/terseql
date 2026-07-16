@@ -1,7 +1,8 @@
 import { dayOne } from "./day-0001.js";
+import { dayTwo } from "./day-0002.js";
 
 /** @type {import("./schema.js").Puzzle[]} */
-export const puzzles = [dayOne];
+export const puzzles = [dayOne, dayTwo];
 
 /**
  * @param {string} id
