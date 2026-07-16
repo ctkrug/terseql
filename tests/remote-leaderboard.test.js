@@ -176,6 +176,17 @@ describe("fetchTop", () => {
     expect(result.entries.map((e) => e.bytes)).toEqual([61]);
   });
 
+  it("drops a fractional byte count, which is impossible and unbeatable", async () => {
+    // A query is a whole number of bytes. 0.5 clears "positive and finite"
+    // but still sorts above every honest score — the same unbeatable-row
+    // problem as 0, one decimal point away.
+    const fetchImpl = vi.fn(() =>
+      Promise.resolve(jsonResponse([{ bytes: 0.5 }, { bytes: 61.5 }, { bytes: 61 }])),
+    );
+    const result = await client(fetchImpl).fetchTop("2026-07-16");
+    expect(result.entries.map((e) => e.bytes)).toEqual([61]);
+  });
+
   it("coerces a numeric string byte count", async () => {
     const fetchImpl = vi.fn(() => Promise.resolve(jsonResponse([{ bytes: "61" }])));
     const result = await client(fetchImpl).fetchTop("2026-07-16");
