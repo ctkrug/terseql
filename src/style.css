@@ -529,8 +529,11 @@ button:disabled {
   border-color: rgba(94, 225, 255, 0.3);
 }
 
+/* No `outline: none` here. This rule sits after the shared :focus-visible
+   rule at equal specificity, so suppressing the outline for the glow would
+   silently strip the editor's focus ring — the one control a keyboard player
+   spends the whole session in. Glow and ring, together. */
 .editor-input:focus {
-  outline: none;
   border-color: var(--accent);
   box-shadow: var(--glow-accent);
 }
