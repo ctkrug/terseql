@@ -330,12 +330,19 @@ export function createApp({
         streak: getCurrentStreak(now),
       });
 
+      // Only a personal best is news to the board. Posting every correct
+      // resubmit would either pile duplicate rows onto a public board or, on
+      // a backend that keeps the latest row per player, let a player golf
+      // down to 61 and then lose that standing to their own sloppy 80.
+      //
       // Fire-and-forget: a submission failing to reach the board must not
       // interfere with a solve that already counted locally.
-      leaderboard
-        .submit({ puzzleId: puzzle.id, bytes: verdict.bytes, timestamp: now.toISOString() })
-        .then(() => refreshBoard())
-        .catch(() => {});
+      if (previousBest === null || verdict.bytes < previousBest) {
+        leaderboard
+          .submit({ puzzleId: puzzle.id, bytes: verdict.bytes, timestamp: now.toISOString() })
+          .then(() => refreshBoard())
+          .catch(() => {});
+      }
     } finally {
       grading = false;
       submitButton.disabled = false;
