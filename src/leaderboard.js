@@ -49,3 +49,55 @@ export function getBest(puzzleId) {
 export function getSolvedCount() {
   return Object.keys(readStore()).length;
 }
+
+/**
+ * Every solved puzzle id (an ISO `YYYY-MM-DD` date), ascending.
+ * @returns {string[]}
+ */
+export function getSolvedPuzzleIds() {
+  return Object.keys(readStore()).sort();
+}
+
+function previousDay(isoDay) {
+  const date = new Date(`${isoDay}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Length of the current run of consecutive solved days, counting back from
+ * `today`.
+ *
+ * A streak stays alive while today's puzzle is still unsolved — it's only
+ * broken once a day passes with nothing solved — so the most recent solve may
+ * be today OR yesterday. Anything older means the run already ended and the
+ * streak is 0. Solves are keyed by puzzle id, which is the puzzle's UTC
+ * calendar date, so this is pure string date arithmetic with no timezone.
+ *
+ * @param {string[]} solvedDates - ISO `YYYY-MM-DD` strings, any order
+ * @param {string} today - ISO `YYYY-MM-DD`
+ * @returns {number}
+ */
+export function computeStreak(solvedDates, today) {
+  const solved = new Set(solvedDates);
+  if (!solved.size) return 0;
+
+  let cursor = solved.has(today) ? today : previousDay(today);
+  if (!solved.has(cursor)) return 0;
+
+  let streak = 0;
+  while (solved.has(cursor)) {
+    streak += 1;
+    cursor = previousDay(cursor);
+  }
+  return streak;
+}
+
+/**
+ * The player's current solve streak in days.
+ * @param {Date} [now]
+ * @returns {number}
+ */
+export function getCurrentStreak(now = new Date()) {
+  return computeStreak(getSolvedPuzzleIds(), now.toISOString().slice(0, 10));
+}
