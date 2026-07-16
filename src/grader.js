@@ -16,11 +16,16 @@ function valuesEqual(a, b) {
 }
 
 /**
- * Compare two sql.js result sets ({columns, values}) for exact equality,
- * including row order (SQL result order is not guaranteed unless ORDER BY
- * is used, so puzzles that care about order must specify it — this keeps
- * grading deterministic rather than silently reordering on the player's
- * behalf).
+ * Compare two sql.js result sets ({columns, values}).
+ *
+ * Row order and column order both matter: SQL guarantees neither without an
+ * ORDER BY, so a puzzle that cares must say so in its prompt, and the grader
+ * never silently reorders on the player's behalf.
+ *
+ * Column *names* deliberately do NOT matter — only how many there are. This
+ * is a golf game scored in bytes, and charging a player for `AS total` would
+ * tax them for a label nobody reads. `SELECT name, SUM(amount) ...` scores
+ * the same as the aliased version.
  */
 export function resultSetsEqual(actual, expected) {
   if (!actual || !expected) return actual === expected;
