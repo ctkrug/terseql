@@ -129,6 +129,36 @@ describe("a corrupted store", () => {
     recordSolve("2026-07-16", 61, "new");
     expect(getBest("2026-07-16").trail).toEqual([80, 61]);
   });
+
+  // recordSolve only ever appends a strictly better count, so a real trail
+  // descends and ends at `bytes`. A stored one that doesn't is corrupt — and
+  // the share card reads the trail, not `bytes`, so an unrepaired one has the
+  // player posting a score they never got.
+  it("repairs a trail that does not end at the recorded best", () => {
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: 61, solvedAt: "x", trail: [10, 20] } }),
+    );
+    const best = getBest("2026-07-16");
+    expect(best.bytes).toBe(61);
+    expect(best.trail.at(-1)).toBe(61);
+  });
+
+  it("repairs a trail stored out of order", () => {
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: 61, solvedAt: "x", trail: [74, 96, 61] } }),
+    );
+    expect(getBest("2026-07-16").trail).toEqual([96, 74, 61]);
+  });
+
+  it("leaves a well-formed trail exactly as written", () => {
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: 61, solvedAt: "x", trail: [96, 74, 61] } }),
+    );
+    expect(getBest("2026-07-16").trail).toEqual([96, 74, 61]);
+  });
 });
 
 describe("getSolvedCount", () => {
