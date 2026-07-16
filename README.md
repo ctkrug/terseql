@@ -24,20 +24,39 @@ cadence and an honest, can't-be-gamed grader running live in the browser. Terseq
 pairing: one puzzle a day, instant feedback, a real database engine, and a byte counter that
 ticks down as you trim your query character by character.
 
-## Planned features
+## Features
 
-- **Daily puzzle** — a new schema + prompt + hidden test suite every day, seeded so everyone
-  gets the same puzzle and the same edge cases.
-- **In-browser SQLite** — sql.js (SQLite → WASM) runs every query against a real engine
-  client-side; results render instantly, no backend required to play.
-- **Hidden test suite grading** — each puzzle ships extra fixture rows/tables not shown in the
-  preview, so a query that merely matches the visible sample data still fails if it isn't
-  actually correct.
-- **Byte-count leaderboard** — score is `LENGTH(query)` in UTF-8 bytes; ties broken by
-  submission time. Watch your byte count fall live as you edit.
-- **Streaks & history** — track which days you've solved and your best byte count per puzzle,
-  Wordle-style.
-- **Query editor** — a small, fast SQL editor with syntax highlighting and instant run.
+- **A real engine, in your tab** — sql.js (SQLite → WebAssembly) executes every query
+  client-side. Hit Run and the actual result table appears; there's no backend in the solve
+  loop at all.
+- **Hidden fixture grading** — each puzzle ships seeded databases you never see, covering
+  empty groups, ties, NULLs and negatives. A query that fits the visible sample and nothing
+  else fails, which is the point.
+- **A live byte counter** — UTF-8 bytes (not characters, so exotic glyphs can't buy you a
+  lower score), rolling digit by digit as you trim.
+- **Daily rotation** — puzzles are keyed to the UTC calendar date, so everyone solves the same
+  puzzle on the same day. Five are authored today.
+- **Win celebration & share card** — a Wordle-style card showing your golf trail (96 → 74 → 61) as a shrinking staircase. It carries no query text, so it can't spoil the puzzle.
+- **Personal bests, streaks and a leaderboard** — bests and streaks persist locally; the shared
+  board is optional and the app degrades to a designed solo mode without it.
+- **Synthesized sound** — every SFX is generated from oscillators and noise at runtime (no
+  audio files), with a mute that persists.
+
+## Running it
+
+```bash
+npm install
+npm run dev      # dev server
+npm test         # full suite
+npm run lint
+npm run build    # → dist/ (landing page) + dist/app/ (the app)
+npm run preview  # serve the built app
+```
+
+The build is one self-contained directory using only relative paths, so it serves correctly
+from a domain root or a subpath. To point the app at a shared leaderboard, set
+`VITE_LEADERBOARD_URL` at build time; with it unset the app runs standalone on local personal
+bests.
 
 ## Stack
 
@@ -45,14 +64,21 @@ ticks down as you trim your query character by character.
 - **[sql.js](https://github.com/sql-js/sql.js)** — SQLite compiled to WebAssembly, run entirely
   client-side.
 - **[Vite](https://vitejs.dev/)** — dev server + static production build.
-- **[Vitest](https://vitest.dev/)** — unit tests for the grader and puzzle fixtures.
+- **[Vitest](https://vitest.dev/)** — unit, DOM and real-engine integration tests.
 
-Static output, no server required — see [`docs/VISION.md`](docs/VISION.md) for the full design
-and [`docs/BACKLOG.md`](docs/BACKLOG.md) for the build plan.
+## Docs
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the code map: modules, data flow, decisions
+- [`docs/VISION.md`](docs/VISION.md) — what this is and why
+- [`docs/DESIGN.md`](docs/DESIGN.md) — the visual direction and tokens
+- [`docs/BACKLOG.md`](docs/BACKLOG.md) — what's built vs. planned
 
 ## Status
 
-Early scaffold — see the backlog for what's built vs. planned.
+The core loop is complete and playable: write a query, run it against a real database, submit,
+get graded against hidden fixtures, celebrate, and chase a shorter one. Remaining work is
+listed in the backlog — chiefly a real shared leaderboard backend (the client is built and
+waiting for an endpoint).
 
 ## License
 
