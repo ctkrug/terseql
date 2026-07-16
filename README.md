@@ -1,86 +1,107 @@
 # Terseql
 
-A daily code-golf puzzle: write the **shortest correct SQL query** that passes a hidden test
-suite against a real, in-browser SQLite database. Leaderboard by byte count. New puzzle every
-day.
+**▶ Live demo · [apps.charliekrug.com/terseql](https://apps.charliekrug.com/terseql/)**
 
-## What it is
+[![CI](https://github.com/ctkrug/terseql/actions/workflows/ci.yml/badge.svg)](https://github.com/ctkrug/terseql/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Each day, Terseql ships a puzzle: a schema, some seed data, and a plain-English goal ("return
-each customer's total spend, highest first"). You write a SQL query in the browser. It runs
-instantly against a real SQLite engine — compiled to WebAssembly via
-[sql.js](https://github.com/sql-js/sql.js), no server round-trip — and is checked against a
-hidden suite of edge-case fixtures so you can't just eyeball the sample data and hardcode an
-answer. If it passes, your byte count goes on the board.
+The daily SQL puzzle where shortest wins. One puzzle a day: a small schema, a plain-English
+goal, and a real SQLite database running in your browser. Getting the query working is the easy
+part. Your score is its UTF-8 byte length, and the board sorts ascending.
 
-The game is the tension between _correct_ and _short_: getting the right answer is the floor,
-not the ceiling. The leaderboard is sorted by `LENGTH(query)` in bytes, and shaving one more
-character off a working query is most of the fun.
+For developers and analysts who write SQL well enough that "correct" stopped being interesting.
 
-## Why
+## How a round goes
 
-Code-golf sites exist. SQL practice sites exist. Nothing pairs them with a Wordle-style daily
-cadence and an honest, can't-be-gamed grader running live in the browser. Terseql is that
-pairing: one puzzle a day, instant feedback, a real database engine, and a byte counter that
-ticks down as you trim your query character by character.
+Day one asks for each customer's total spend, highest first, skipping anyone who never ordered.
+The query you'd put in a pull request is 126 bytes:
 
-## Features
+```sql
+SELECT c.name, SUM(o.amount) AS total
+FROM customers c JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id
+ORDER BY total DESC
+```
 
-- **A real engine, in your tab** — sql.js (SQLite → WebAssembly) executes every query
-  client-side. Hit Run and the actual result table appears; there's no backend in the solve
-  loop at all.
-- **Hidden fixture grading** — each puzzle ships seeded databases you never see, covering
-  empty groups, ties, NULLs and negatives. A query that fits the visible sample and nothing
-  else fails, which is the point.
-- **A live byte counter** — UTF-8 bytes (not characters, so exotic glyphs can't buy you a
-  lower score), rolling digit by digit as you trim.
-- **Daily rotation** — puzzles are keyed to the UTC calendar date, so everyone solves the same
-  puzzle on the same day. Five are authored today.
-- **Win celebration & share card** — a Wordle-style card showing your golf trail (96 → 74 → 61) as a shrinking staircase. It carries no query text, so it can't spoil the puzzle.
-- **Personal bests, streaks and a leaderboard** — bests and streaks persist locally; the shared
-  board is optional and the app degrades to a designed solo mode without it.
-- **Synthesized sound** — every SFX is generated from oscillators and noise at runtime (no
-  audio files), with a mute that persists.
+That's the starting line. The alias goes, because `ORDER BY 2` points at the column by position.
+`JOIN ... ON` becomes a comma join and a `WHERE`. Whitespace the parser doesn't need goes:
+
+```sql
+SELECT name,SUM(amount)FROM customers c,orders WHERE customer_id=c.id GROUP BY 1 ORDER BY 2 DESC
+```
+
+96 bytes, same rows, still passes every hidden fixture. Somewhere below that is a query you
+haven't thought of yet.
+
+Solve it and you get a share card, which is the trail rather than the answer:
+
+```
+Terseql 2026-07-16 — Top Spenders
+
+🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦 126
+🟦🟦🟦🟦🟦🟦🟦🟦🟦 113
+🟦🟦🟦🟦🟦🟦🟦🟦 101
+🟩🟩🟩🟩🟩🟩🟩🟩 96
+
+96 bytes (4 cuts)
+🔥 4-day streak
+https://apps.charliekrug.com/terseql
+```
+
+It carries no query text, so pasting it in a group chat can't spoil the day for anyone.
+
+## What makes the score mean something
+
+- **A real engine, in your tab.** sql.js (SQLite compiled to WebAssembly) executes every query
+  client-side. Hit Run and the actual result table appears. There is no backend in the solve
+  loop at all, and the WASM is compiled while you're still reading the prompt, so the first Run
+  is as instant as the tenth.
+- **Hidden fixtures.** Each puzzle ships seeded databases you never see, covering empty groups,
+  ties, NULLs and negatives. A query that fits the visible sample and nothing else is told it
+  passed the sample and failed a hidden case, and never which one. Working that out is the
+  puzzle.
+- **Bytes, counted honestly.** UTF-8 bytes, not characters, so a multi-byte glyph costs what it
+  actually costs. The counter rolls digit by digit as you trim.
+- **A fresh database every Run.** Write `DROP TABLE orders` if you like; the next Run starts from
+  the same ground truth, and grading uses its own databases regardless.
+- **Daily rotation.** Puzzles are keyed to the UTC calendar date, so everyone solves the same one
+  on the same day. Five are authored.
 
 ## Running it
 
 ```bash
 npm install
 npm run dev           # dev server
-npm test              # full suite
+npm test              # full suite (330 tests)
 npm run test:coverage # full suite + a coverage report
 npm run lint
-npm run build         # → dist/ (landing page) + dist/app/ (the app)
+npm run build         # -> dist/ (landing page) + dist/app/ (the app)
 npm run preview       # serve the built site: landing at /, app at /app/
 ```
 
-The build is one self-contained directory using only relative paths, so it serves correctly
-from a domain root or a subpath. To point the app at a shared leaderboard, set
-`VITE_LEADERBOARD_URL` at build time; with it unset the app runs standalone on local personal
-bests.
+The build is one self-contained directory using only relative paths, so it serves correctly from
+a domain root or a subpath. To point the app at a shared leaderboard, set `VITE_LEADERBOARD_URL`
+at build time; with it unset the app runs standalone on local personal bests.
 
 ## Stack
 
-- **JavaScript**, no framework — small enough that one isn't needed.
-- **[sql.js](https://github.com/sql-js/sql.js)** — SQLite compiled to WebAssembly, run entirely
+- **JavaScript**, no framework. It's small enough that one isn't needed.
+- **[sql.js](https://github.com/sql-js/sql.js)**: SQLite compiled to WebAssembly, run entirely
   client-side.
-- **[Vite](https://vitejs.dev/)** — dev server + static production build.
-- **[Vitest](https://vitest.dev/)** — unit, DOM and real-engine integration tests.
+- **[Vite](https://vitejs.dev/)**: dev server + static production build.
+- **[Vitest](https://vitest.dev/)**: unit, DOM and real-engine integration tests.
 
 ## Docs
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the code map: modules, data flow, decisions
-- [`docs/VISION.md`](docs/VISION.md) — what this is and why
-- [`docs/DESIGN.md`](docs/DESIGN.md) — the visual direction and tokens
-- [`docs/BACKLOG.md`](docs/BACKLOG.md) — what's built vs. planned
-
-## Status
-
-The core loop is complete and playable: write a query, run it against a real database, submit,
-get graded against hidden fixtures, celebrate, and chase a shorter one. Remaining work is
-listed in the backlog — chiefly a real shared leaderboard backend (the client is built and
-waiting for an endpoint).
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): the code map, data flow and decisions
+- [`docs/VISION.md`](docs/VISION.md): what this is and why
+- [`docs/DESIGN.md`](docs/DESIGN.md): the visual direction and tokens
+- [`docs/BACKLOG.md`](docs/BACKLOG.md): what's built vs. planned
 
 ## License
 
-MIT — see [`LICENSE`](LICENSE).
+MIT. See [`LICENSE`](LICENSE).
+
+---
+
+More of Charlie's projects → [apps.charliekrug.com](https://apps.charliekrug.com)
