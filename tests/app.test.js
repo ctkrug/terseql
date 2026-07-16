@@ -24,6 +24,13 @@ function offlineBoard() {
   };
 }
 
+/** A promise the test resolves by hand, to control when a fake dependency lands. */
+function deferred() {
+  let resolve;
+  const promise = new Promise((res) => (resolve = res));
+  return { promise, resolve };
+}
+
 function mount(overrides = {}) {
   const root = document.createElement("div");
   document.body.append(root);
@@ -230,6 +237,28 @@ describe("run", () => {
     expect(execute).not.toHaveBeenCalled();
     expect($("#results").dataset.state).toBe("idle");
   });
+
+  it("shows the newest run's result even when an older run resolves last", async () => {
+    // Queries are raced, not queued: an expensive first query can land after
+    // a cheap second one, and the table must never fall back to the stale
+    // answer for a query the editor no longer holds.
+    const slow = deferred();
+    const fast = deferred();
+    const execute = vi.fn().mockReturnValueOnce(slow.promise).mockReturnValueOnce(fast.promise);
+    const { $, app } = mount({ execute });
+
+    $("#query").value = "SELECT 1";
+    const first = app.run();
+    const second = app.run();
+
+    fast.resolve({ ok: true, result: { columns: ["fresh"], values: [[2]] } });
+    await second;
+    slow.resolve({ ok: true, result: { columns: ["stale"], values: [[1]] } });
+    await first;
+
+    expect($("#results").textContent).toContain("fresh");
+    expect($("#results").textContent).not.toContain("stale");
+  });
 });
 
 describe("submit", () => {
@@ -333,6 +362,30 @@ describe("submit", () => {
       new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, shiftKey: true }),
     );
     await vi.waitFor(() => expect(grade).toHaveBeenCalled());
+  });
+
+  it("grades once when the submit shortcut is mashed", async () => {
+    // The disabled button guards the click path; the keyboard path calls
+    // submit() directly and has to be guarded on its own. Ungated, a mash
+    // posts the same solve to the public board once per keypress.
+    const leaderboard = {
+      isEnabled: () => true,
+      submit: vi.fn(() => Promise.resolve({ ok: true })),
+      fetchTop: vi.fn(() => Promise.resolve({ ok: true, entries: [] })),
+    };
+    const grade = vi.fn(() => Promise.resolve(passing));
+    const { $ } = mount({ grade, leaderboard });
+
+    $("#query").value = "SELECT 1";
+    for (let i = 0; i < 3; i++) {
+      $("#query").dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, shiftKey: true }),
+      );
+    }
+    await vi.waitFor(() => expect(grade).toHaveBeenCalled());
+
+    expect(grade).toHaveBeenCalledTimes(1);
+    expect(leaderboard.submit).toHaveBeenCalledTimes(1);
   });
 
   it("posts the byte count to the shared board, without the query", async () => {
