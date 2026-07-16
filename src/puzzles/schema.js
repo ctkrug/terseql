@@ -13,6 +13,8 @@
  * @property {string} schemaSql - CREATE TABLE statements shown to the player as reference
  * @property {string} previewSetupSql - schema + small visible sample data used for the live preview
  * @property {Fixture[]} fixtures - hidden test fixtures the grader checks; index 0 may equal the preview
+ * @property {string} [referenceSql] - a known-correct solution, used only to sanity-check
+ *   fixtures in tests — never shown to the player
  */
 
 /**
