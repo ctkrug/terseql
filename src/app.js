@@ -220,7 +220,7 @@ export function createApp({
       const card = formatShareCard({
         puzzleId: puzzle.id,
         title: puzzle.title,
-        trail: best.trail ?? [best.bytes],
+        trail: best.trail,
         streak: getCurrentStreak(now),
       });
       try {

@@ -101,8 +101,12 @@ export function recordSolve(puzzleId, bytes, solvedAt) {
 }
 
 /**
+ * The player's best result for a puzzle, or undefined if they haven't solved
+ * it. `readStore` sanitizes, so a returned entry always carries a descending
+ * `trail` ending at `bytes` — callers need no fallback of their own.
+ *
  * @param {string} puzzleId
- * @returns {{bytes: number, solvedAt: string} | undefined}
+ * @returns {{bytes: number, solvedAt: string, trail: number[]} | undefined}
  */
 export function getBest(puzzleId) {
   return readStore()[puzzleId];
