@@ -46,11 +46,12 @@ ticks down as you trim your query character by character.
 
 ```bash
 npm install
-npm run dev      # dev server
-npm test         # full suite
+npm run dev           # dev server
+npm test              # full suite
+npm run test:coverage # full suite + a coverage report
 npm run lint
-npm run build    # → dist/ (landing page) + dist/app/ (the app)
-npm run preview  # serve the built app
+npm run build         # → dist/ (landing page) + dist/app/ (the app)
+npm run preview       # serve the built site: landing at /, app at /app/
 ```
 
 The build is one self-contained directory using only relative paths, so it serves correctly
