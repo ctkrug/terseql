@@ -36,6 +36,36 @@ describe("resultSetsEqual", () => {
   it("rejects mismatched values", () => {
     expect(resultSetsEqual(base, { columns: ["a"], values: [[2]] })).toBe(false);
   });
+
+  it("ignores column names so golfers aren't taxed for aliases", () => {
+    expect(resultSetsEqual(base, { columns: ["totally_different"], values: [[1]] })).toBe(true);
+  });
+
+  it("respects column order", () => {
+    const twoCols = { columns: ["a", "b"], values: [[1, 2]] };
+    expect(resultSetsEqual(twoCols, { columns: ["a", "b"], values: [[2, 1]] })).toBe(false);
+  });
+
+  it("matches two empty result sets", () => {
+    expect(resultSetsEqual({ columns: [], values: [] }, { columns: [], values: [] })).toBe(true);
+  });
+
+  it("rejects a null or undefined side against a real result set", () => {
+    expect(resultSetsEqual(null, base)).toBe(false);
+    expect(resultSetsEqual(base, undefined)).toBe(false);
+    expect(resultSetsEqual(null, null)).toBe(true);
+  });
+
+  it("distinguishes NULL from 0 and from an empty string", () => {
+    const nullRow = { columns: ["a"], values: [[null]] };
+    expect(resultSetsEqual(nullRow, { columns: ["a"], values: [[0]] })).toBe(false);
+    expect(resultSetsEqual(nullRow, { columns: ["a"], values: [[""]] })).toBe(false);
+    expect(resultSetsEqual(nullRow, { columns: ["a"], values: [[null]] })).toBe(true);
+  });
+
+  it("does not conflate a number with its string form", () => {
+    expect(resultSetsEqual({ columns: ["a"], values: [["1"]] }, base)).toBe(false);
+  });
 });
 
 describe("gradeQuery against the day-0001 puzzle", () => {
