@@ -1,6 +1,8 @@
 const MAX_BLOCKS = 10;
+const MAX_ROWS = 8;
 const BLOCK = "🟦";
 const BEST_BLOCK = "🟩";
+const ELISION = "⋯";
 
 export const SHARE_URL = "https://apps.charliekrug.com/terseql";
 
@@ -16,6 +18,23 @@ function bar(bytes, worst, isBest) {
   const ratio = worst > 0 ? bytes / worst : 1;
   const blocks = Math.max(1, Math.min(MAX_BLOCKS, Math.round(ratio * MAX_BLOCKS)));
   return (isBest ? BEST_BLOCK : BLOCK).repeat(blocks);
+}
+
+/**
+ * Pick the rows worth showing from a trail of any length.
+ *
+ * A golfer trimming one byte at a time can rack up 20+ improvements, and a
+ * card is made to be pasted into a group chat — a row per cut is a wall, not
+ * a glance. Where you started and where you landed carry the story; the
+ * middle is decoration, so the tail (the hard-won last cuts) survives and the
+ * rest collapses. The "N cuts" summary still reports the real count.
+ *
+ * @param {number[]} trail
+ * @returns {Array<number|typeof ELISION>}
+ */
+function visibleRows(trail) {
+  if (trail.length <= MAX_ROWS) return trail;
+  return [trail[0], ELISION, ...trail.slice(-(MAX_ROWS - 2))];
 }
 
 /**
@@ -41,8 +60,13 @@ export function formatShareCard({ puzzleId, title, trail, streak = 0, url = SHAR
   const best = trail[trail.length - 1];
   const lines = [`Terseql ${puzzleId} — ${title}`, ""];
 
-  trail.forEach((bytes, i) => {
-    const isBest = i === trail.length - 1;
+  const rows = visibleRows(trail);
+  rows.forEach((bytes, i) => {
+    if (bytes === ELISION) {
+      lines.push(ELISION);
+      return;
+    }
+    const isBest = i === rows.length - 1;
     lines.push(`${bar(bytes, worst, isBest)} ${bytes}`);
   });
 
