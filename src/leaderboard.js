@@ -19,19 +19,28 @@ function writeStore(store) {
 }
 
 /**
- * Record a passing solve for a puzzle, keeping only the player's best
- * (lowest) byte count per puzzle.
+ * Record a passing solve for a puzzle, keeping the player's best (lowest)
+ * byte count.
+ *
+ * Alongside the best, this keeps a `trail` of every byte count that was an
+ * improvement at the time — the staircase of a player golfing 96 → 74 → 61.
+ * It's what the share card renders, and it's the shape of the game, so it's
+ * worth persisting rather than holding in page memory that a reload drops.
+ *
  * @param {string} puzzleId
  * @param {number} bytes
  * @param {string} solvedAt - ISO date string
+ * @returns {{bytes: number, solvedAt: string, trail: number[]}}
  */
 export function recordSolve(puzzleId, bytes, solvedAt) {
   const store = readStore();
   const existing = store[puzzleId];
-  if (!existing || bytes < existing.bytes) {
-    store[puzzleId] = { bytes, solvedAt };
-    writeStore(store);
+  if (!existing) {
+    store[puzzleId] = { bytes, solvedAt, trail: [bytes] };
+  } else if (bytes < existing.bytes) {
+    store[puzzleId] = { bytes, solvedAt, trail: [...(existing.trail ?? [existing.bytes]), bytes] };
   }
+  writeStore(store);
   return store[puzzleId];
 }
 
