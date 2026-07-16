@@ -1,4 +1,4 @@
-import { createSeededDatabase } from "./db.js";
+import { createDatabase, createSeededDatabase } from "./db.js";
 import { byteLength, gradeQuery } from "./grader.js";
 import { getBest, getCurrentStreak, recordSolve } from "./leaderboard.js";
 import { leaderboardClient } from "./remote-leaderboard.js";
@@ -32,6 +32,24 @@ export function dedent(text) {
     .map((line) => line.slice(shared))
     .join("\n")
     .trim();
+}
+
+/**
+ * Compile the WASM engine ahead of the player's first Run.
+ *
+ * sql.js fetches and compiles ~660KB of WebAssembly on first use, which put
+ * roughly a second between clicking Run and seeing a table — the one moment
+ * the whole product is built around, and the one place latency is least
+ * affordable. Starting the download while the player is still reading the
+ * prompt makes that first Run as instant as every subsequent one.
+ *
+ * Failures are swallowed on purpose: this is a head start, not a dependency.
+ * If it fails, the first real query pays the cost and reports its own error.
+ */
+export function warmEngine() {
+  return createDatabase()
+    .then((db) => db.close())
+    .catch(() => {});
 }
 
 /**
@@ -153,6 +171,7 @@ export function createApp({
   clipboard = globalThis.navigator?.clipboard,
   execute = executeQuery,
   grade = gradeQuery,
+  warm = warmEngine,
 } = {}) {
   if (!root) throw new Error("createApp needs a root element");
   if (!puzzle) throw new Error("createApp needs a puzzle");
@@ -332,6 +351,9 @@ export function createApp({
   renderMute();
   results.showIdle();
   refreshBoard();
+  // Fire-and-forget, and guarded here too: a rejected head start must not
+  // surface as an unhandled rejection on an otherwise healthy page.
+  Promise.resolve(warm()).catch(() => {});
 
   return {
     run,
