@@ -25,10 +25,7 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(appDir, { recursive: true });
 
 console.log("building the app → dist/app");
-execFileSync("npx", ["vite", "build", "--outDir", "dist/app", "--emptyOutDir"], {
-  cwd: root,
-  stdio: "inherit",
-});
+execFileSync("npx", ["vite", "build"], { cwd: root, stdio: "inherit" });
 
 console.log("copying the landing page → dist");
 await cp(join(root, "site"), dist, { recursive: true });

@@ -5,6 +5,10 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: "./",
   build: {
-    outDir: "dist",
+    // dist/ belongs to the assembled site (scripts/build-site.mjs puts the
+    // landing page there); the app is one directory inside it. Naming that
+    // here keeps a bare `vite build` from emptying dist/ and taking the
+    // landing page with it.
+    outDir: "dist/app",
   },
 });
