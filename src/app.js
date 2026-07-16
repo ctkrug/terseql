@@ -208,7 +208,10 @@ export function createApp({
   // Both loops are reachable from the keyboard, which has no equivalent of a
   // disabled button — so neither can rely on the button to serialize it.
   let grading = false;
-  let latestRun = 0;
+  // Run and Submit both write the results panel, so they share one counter:
+  // whichever the player asked for last owns the panel, and anything older
+  // that resolves late stays silent rather than painting over the answer.
+  let latestRequest = 0;
 
   const win = createWinOverlay($("win"), {
     onCopyShare: async () => {
@@ -270,13 +273,13 @@ export function createApp({
     // Runs race rather than queue: mashing Ctrl+Enter must not make the
     // player wait out a query they've already replaced. Only the newest run
     // may paint, so a slow early query can't land on top of a later answer.
-    const token = ++latestRun;
+    const token = ++latestRequest;
 
     sfx.play("run");
     results.showRunning();
 
     const outcome = await execute(sql, puzzle.previewSetupSql);
-    if (token !== latestRun) return;
+    if (token !== latestRequest) return;
 
     if (outcome.ok) {
       results.showResult(outcome.result);
@@ -297,13 +300,18 @@ export function createApp({
     // double-count the solve and post a duplicate row to the public board.
     if (grading) return;
 
+    const token = ++latestRequest;
     grading = true;
     submitButton.disabled = true;
     submitButton.textContent = "Grading…";
     try {
       const verdict = await grade(sql, puzzle);
+      // A Run started after this Submit owns the panel now; the grade still
+      // counts, it just doesn't get to repaint what the player moved on to.
+      const ownsPanel = token === latestRequest;
 
       if (!verdict.correct) {
+        if (!ownsPanel) return;
         results.flash("fail");
         sfx.play("fail");
         // Name the fixture, never its data — that's the hidden half of the
@@ -319,7 +327,7 @@ export function createApp({
       const previousBest = getBest(puzzle.id)?.bytes ?? null;
       recordSolve(puzzle.id, verdict.bytes, now.toISOString());
 
-      results.flash("pass");
+      if (ownsPanel) results.flash("pass");
       sfx.play(solvedThisSession ? "pass" : "win");
       solvedThisSession = true;
 
