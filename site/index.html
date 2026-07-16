@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terseql — the daily SQL code-golf puzzle</title>
+    <meta
+      name="description"
+      content="One puzzle a day. Write the shortest correct SQL query against a real in-browser SQLite database. Scored in bytes, graded against hidden fixtures."
+    />
+    <meta name="theme-color" content="#0b1220" />
+    <meta property="og:title" content="Terseql — the daily SQL code-golf puzzle" />
+    <meta
+      property="og:description"
+      content="One puzzle a day. Write the shortest correct SQL query against a real in-browser SQLite database. Scored in bytes."
+    />
+    <meta property="og:type" content="website" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b1220'/%3E%3Cpath d='M8 8h48M8 56h48M8 8v48M56 8v48' stroke='%235ee1ff' stroke-opacity='0.25' stroke-width='2'/%3E%3Ctext x='32' y='42' font-family='monospace' font-size='30' font-weight='700' fill='%235ee1ff' text-anchor='middle'%3E&gt;_%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./landing.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="wordmark">
+        <span class="wordmark-mark" aria-hidden="true">&gt;_</span>
+        <span class="wordmark-text">terse<span class="wordmark-accent">ql</span></span>
+      </div>
+      <a class="button-ghost" href="./app/">Play today's puzzle</a>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">The daily SQL code-golf puzzle</p>
+          <h1 class="hero-title display">
+            Anyone can write the query.<br />
+            Can you write it in <span class="accent">61 bytes</span>?
+          </h1>
+          <p class="hero-lede">
+            One puzzle a day: a small schema, a plain-English goal, and a real SQLite database
+            running in your browser. Getting it working is the boring part. Your score is the UTF-8
+            byte length of your query, and the leaderboard sorts ascending.
+          </p>
+          <div class="hero-actions">
+            <a class="button-primary" href="./app/">Play today's puzzle →</a>
+            <a class="button-ghost" href="https://github.com/ctkrug/terseql">Source on GitHub</a>
+          </div>
+          <p class="hero-note">
+            <span class="dot" aria-hidden="true"></span>
+            No account. No server round-trip. The engine runs in your tab.
+          </p>
+        </div>
+
+        <!-- A mock of the instrument panel, in the app's own tokens. -->
+        <div class="hero-panel" aria-hidden="true">
+          <div class="mock-head">
+            <span class="mock-label">Your query</span>
+            <span class="mock-counter"
+              ><span class="mock-digit">6</span><span class="mock-digit rolling">1</span></span
+            >
+            <span class="mock-unit">bytes</span>
+          </div>
+          <pre class="mock-editor">
+SELECT name,SUM(amount)FROM customers c
+JOIN orders ON customer_id=c.id
+GROUP BY c.id ORDER BY 2 DESC</pre>
+          <table class="mock-table">
+            <thead>
+              <tr>
+                <th>name</th>
+                <th>total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Grace</td>
+                <td class="num">900</td>
+              </tr>
+              <tr>
+                <td>Ada</td>
+                <td class="num">700</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="rules">
+        <article class="rule">
+          <p class="rule-index">01</p>
+          <h2 class="rule-title display">A real engine, not a checker</h2>
+          <p>
+            SQLite itself, compiled to WebAssembly, runs in your tab. Hit Run and the actual result
+            table appears — no round-trip, no queue, no waiting to find out you had a typo.
+          </p>
+        </article>
+        <article class="rule">
+          <p class="rule-index">02</p>
+          <h2 class="rule-title display">Hidden fixtures, so you can't fake it</h2>
+          <p>
+            Your query is graded against seeded databases you never see — empty groups, ties, NULLs,
+            negatives. A query that fits the sample you can see and nothing else fails, exactly as
+            it should.
+          </p>
+        </article>
+        <article class="rule">
+          <p class="rule-index">03</p>
+          <h2 class="rule-title display">Scored in bytes, ascending</h2>
+          <p>
+            Not points, not stars. The UTF-8 length of your query, counted honestly, so you can't
+            buy a lower score with clever characters. Everyone solves the same puzzle on the same
+            day.
+          </p>
+        </article>
+      </section>
+
+      <section class="closer">
+        <h2 class="closer-title display">Today's puzzle is waiting.</h2>
+        <p class="closer-sub">Come back tomorrow for the next one.</p>
+        <a class="button-primary" href="./app/">Play now →</a>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Built by <a href="https://github.com/ctkrug">Charlie Krug</a></p>
+      <p><a href="https://github.com/ctkrug/terseql">Source</a></p>
+    </footer>
+  </body>
+</html>
