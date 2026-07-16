@@ -73,6 +73,64 @@ describe("getBest", () => {
   });
 });
 
+describe("a corrupted store", () => {
+  // Everything here is valid JSON, so the parse succeeds and the wrong shape
+  // reaches the caller. localStorage is editable by hand and shared with every
+  // other script on the origin, so none of this is hypothetical — and all of
+  // it runs at mount, where a throw is a white screen rather than a bad value.
+
+  it("survives a store that parsed to null", () => {
+    localStorage.setItem("terseql:results", "null");
+    expect(getBest("2026-07-16")).toBeUndefined();
+    expect(getSolvedPuzzleIds()).toEqual([]);
+    expect(getCurrentStreak(new Date("2026-07-16T12:00:00Z"))).toBe(0);
+  });
+
+  it("survives a store that parsed to a string", () => {
+    localStorage.setItem("terseql:results", '"abc"');
+    expect(getSolvedPuzzleIds()).toEqual([]);
+    expect(() => recordSolve("2026-07-16", 61, "2026-07-16T10:00:00Z")).not.toThrow();
+    expect(getBest("2026-07-16").bytes).toBe(61);
+  });
+
+  it("does not read array indices as solved puzzle ids", () => {
+    localStorage.setItem("terseql:results", "[1,2,3]");
+    expect(getSolvedPuzzleIds()).toEqual([]);
+    expect(getSolvedCount()).toBe(0);
+  });
+
+  it("discards an entry whose byte count is not a number", () => {
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: "junk", trail: "xyz" } }),
+    );
+    expect(getBest("2026-07-16")).toBeUndefined();
+    // ...and a real solve then records cleanly over the junk.
+    recordSolve("2026-07-16", 61, "2026-07-16T10:00:00Z");
+    expect(getBest("2026-07-16")).toEqual({
+      bytes: 61,
+      solvedAt: "2026-07-16T10:00:00Z",
+      trail: [61],
+    });
+  });
+
+  it("discards a null entry rather than letting it reach the page", () => {
+    localStorage.setItem("terseql:results", JSON.stringify({ "2026-07-16": null }));
+    expect(getBest("2026-07-16")).toBeUndefined();
+    expect(getSolvedPuzzleIds()).toEqual([]);
+  });
+
+  it("repairs a trail that is not an array of numbers", () => {
+    localStorage.setItem(
+      "terseql:results",
+      JSON.stringify({ "2026-07-16": { bytes: 80, solvedAt: "old", trail: "xyz" } }),
+    );
+    expect(getBest("2026-07-16").trail).toEqual([80]);
+    recordSolve("2026-07-16", 61, "new");
+    expect(getBest("2026-07-16").trail).toEqual([80, 61]);
+  });
+});
+
 describe("getSolvedCount", () => {
   it("is zero with nothing solved", () => {
     expect(getSolvedCount()).toBe(0);
