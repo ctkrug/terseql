@@ -328,7 +328,6 @@ export function createApp({
         bytes: verdict.bytes,
         previousBest,
         streak: getCurrentStreak(now),
-        title: previousBest === null ? "Solved" : "Shorter",
       });
 
       // Fire-and-forget: a submission failing to reach the board must not

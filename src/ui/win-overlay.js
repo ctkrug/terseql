@@ -32,6 +32,18 @@ export function describeDelta(bytes, previousBest) {
 }
 
 /**
+ * The headline for each kind of solve. Derived from the same delta as the
+ * subtitle so the two can't contradict each other — a tie headlined
+ * "Shorter" above "Matched your best" reads as a bug, because it is one.
+ */
+const TITLES = {
+  first: "Solved",
+  improved: "Shorter",
+  tied: "Matched",
+  worse: "Still solved",
+};
+
+/**
  * The win moment.
  *
  * Dismissing it is explicitly not "undoing" the solve — the puzzle stays
@@ -82,9 +94,9 @@ export function createWinOverlay(root, options = {}) {
      * @param {number} params.bytes
      * @param {number} [params.previousBest]
      * @param {number} [params.streak]
-     * @param {string} [params.title]
+     * @param {string} [params.title] - overrides the delta-derived headline
      */
-    show({ bytes, previousBest, streak = 0, title = "Solved" }) {
+    show({ bytes, previousBest, streak = 0, title }) {
       lastFocused = document.activeElement;
       open = true;
       root.hidden = false;
@@ -95,13 +107,14 @@ export function createWinOverlay(root, options = {}) {
       card.setAttribute("aria-modal", "true");
       card.setAttribute("aria-labelledby", "win-title");
 
-      const heading = el("h2", "win-title display", title);
+      const delta = describeDelta(bytes, previousBest);
+
+      const heading = el("h2", "win-title display", title ?? TITLES[delta.kind]);
       heading.id = "win-title";
 
       const score = el("p", "win-score");
       score.append(el("span", "win-bytes", String(bytes)), el("span", "win-unit", "bytes"));
 
-      const delta = describeDelta(bytes, previousBest);
       const deltaEl = el("p", `win-delta win-delta-${delta.kind}`, delta.text);
 
       card.append(heading, score, deltaEl);
