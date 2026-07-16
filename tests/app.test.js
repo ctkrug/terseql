@@ -259,6 +259,27 @@ describe("run", () => {
     expect($("#results").textContent).toContain("fresh");
     expect($("#results").textContent).not.toContain("stale");
   });
+
+  it("does not let a run in flight paint over a verdict that landed later", async () => {
+    // Both loops write the same panel. A Run fired before a Submit but
+    // resolving after it must not erase the grade the player asked for.
+    const slow = deferred();
+    const { $, app } = mount({
+      execute: vi.fn(() => slow.promise),
+      grade: () => Promise.resolve({ correct: false, bytes: 10, failedFixture: "hidden-1" }),
+    });
+
+    $("#query").value = "SELECT 1";
+    const running = app.run();
+    await app.submit();
+    expect($("#results").dataset.state).toBe("error");
+
+    slow.resolve({ ok: true, result: { columns: ["late"], values: [[1]] } });
+    await running;
+
+    expect($("#results").dataset.state).toBe("error");
+    expect($("#results").textContent).not.toContain("late");
+  });
 });
 
 describe("submit", () => {
