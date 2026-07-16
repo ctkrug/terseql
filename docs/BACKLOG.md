@@ -111,3 +111,27 @@ byte count fall as you trim the query.
   - A `site/` directory contains a static landing page using the same `docs/DESIGN.md` tokens
     and fonts as the app, buildable to one output directory with relative asset paths.
   - The landing page includes a favicon matching the app's and no placeholder/lorem-ipsum copy.
+
+## Known defects (found at closeout, not yet fixed)
+
+- [ ] **4.1 — A solve on a fallback day doesn't count toward the streak**
+  - `getPuzzleForDate` serves the most recent past puzzle when today has none authored, but
+    `recordSolve` keys the solve to the _puzzle's_ id, while `computeStreak` counts _calendar
+    days_. Those agree only while a puzzle exists for every day.
+  - The catalogue ends `2026-07-20`. From `2026-07-22`, a player who solves every single day
+    has a streak of 0 permanently, and every solve re-posts to the `2026-07-20` board.
+  - Fix direction: record the day the player solved (`solvedAt`) as the streak's key, so the
+    streak survives any gap in the catalogue. Decide separately whether an exhausted catalogue
+    should rotate, repeat, or say so.
+
+- [ ] **4.2 — The results panel can stick on "Running…"**
+  - `run()` paints "Running…" and only `run()` clears it. A Submit that supersedes an
+    in-flight Run (`token !== latestRequest`) makes the run return silently, and a passing
+    grade only calls `results.flash("pass")`, which is decorative and replaces no content.
+  - Repro: click Run, click Submit before it resolves, submit a correct query, dismiss the win
+    overlay. The panel reads "Running…" until the next Run.
+
+- [ ] **4.3 — The results live region announces whole tables**
+  - `#results` is `aria-live="polite"` and receives an up-to-200-row `<table>`, so a screen
+    reader queues the entire table on every Run. Consider moving the live region to a short
+    summary node ("12 rows") and leaving the table out of it.
