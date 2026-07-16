@@ -312,6 +312,33 @@ describe("submit", () => {
     expect($(".win-delta").textContent).toBe("13 bytes shorter");
   });
 
+  it("headlines a first solve, an improvement, a tie and a longer resubmit", async () => {
+    const grade = vi
+      .fn()
+      .mockResolvedValueOnce({ correct: true, bytes: 74, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 61, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 61, failedFixture: null })
+      .mockResolvedValueOnce({ correct: true, bytes: 80, failedFixture: null });
+    const { $, app } = mount({ grade });
+    $("#query").value = "SELECT 1";
+
+    await app.submit();
+    expect($(".win-title").textContent).toBe("Solved");
+
+    await app.submit();
+    expect($(".win-title").textContent).toBe("Shorter");
+
+    // A correct query that ties or loses to your best is still a solve, but
+    // the headline must not congratulate you for a byte you didn't save.
+    await app.submit();
+    expect($(".win-title").textContent).toBe("Matched");
+    expect($(".win-delta").textContent).toBe("Matched your best");
+
+    await app.submit();
+    expect($(".win-title").textContent).toBe("Still solved");
+    expect($(".win-delta").textContent).toBe("19 over your best of 61");
+  });
+
   it("persists the solve so a reload keeps your best", async () => {
     const { $, app } = mount({ grade: () => Promise.resolve(passing) });
     $("#query").value = "SELECT 1";
