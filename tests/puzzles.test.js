@@ -48,6 +48,68 @@ describe.each(puzzles.map((p) => [p.id, p]))("puzzle %s", (_id, puzzle) => {
   );
 });
 
+// validatePuzzle only ever sees well-formed puzzles in the suite above, which
+// proves it accepts them and nothing about whether it would catch a bad one.
+// It's the guard that turns a malformed puzzle file into a clear problem list
+// instead of a confusing mid-grade failure, so its rejections are the half
+// worth pinning.
+describe("validatePuzzle", () => {
+  const wellFormed = {
+    id: "2026-01-01",
+    title: "T",
+    prompt: "P",
+    schemaSql: "CREATE TABLE t (x);",
+    previewSetupSql: "CREATE TABLE t (x);",
+    fixtures: [
+      { name: "preview", setupSql: "CREATE TABLE t (x);", expected: { columns: [], values: [] } },
+    ],
+  };
+
+  it("accepts a well-formed puzzle", () => {
+    expect(validatePuzzle(wellFormed)).toEqual([]);
+  });
+
+  it.each(["id", "title", "prompt", "schemaSql", "previewSetupSql"])(
+    "reports a missing %s",
+    (field) => {
+      const problems = validatePuzzle({ ...wellFormed, [field]: undefined });
+      expect(problems).toEqual([`missing ${field}`]);
+    },
+  );
+
+  it.each([
+    ["undefined", undefined],
+    ["an empty array", []],
+    ["not an array", "nope"],
+  ])("reports fixtures that are %s", (_label, fixtures) => {
+    expect(validatePuzzle({ ...wellFormed, fixtures })).toEqual(["must have at least one fixture"]);
+  });
+
+  it("reports each malformed fixture by index", () => {
+    const problems = validatePuzzle({
+      ...wellFormed,
+      fixtures: [wellFormed.fixtures[0], { name: "hidden-1" }, {}],
+    });
+    expect(problems).toEqual([
+      "fixtures[1] missing setupSql",
+      "fixtures[1] missing expected",
+      "fixtures[2] missing name",
+      "fixtures[2] missing setupSql",
+      "fixtures[2] missing expected",
+    ]);
+  });
+
+  it("collects every problem rather than stopping at the first", () => {
+    expect(validatePuzzle({}).length).toBeGreaterThan(1);
+  });
+
+  it("survives a nullish puzzle instead of throwing", () => {
+    expect(() => validatePuzzle(null)).not.toThrow();
+    expect(validatePuzzle(null)).toContain("missing id");
+    expect(validatePuzzle(undefined)).toContain("missing id");
+  });
+});
+
 describe("puzzle catalogue", () => {
   it("has no duplicate ids", () => {
     const ids = puzzles.map((p) => p.id);
