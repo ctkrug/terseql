@@ -336,20 +336,50 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(240px, 22%) minmax(0, 1fr) minmax(220px, 22%);
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
+}
+
+/* Grid children default to min-width:auto, so a wide child — the schema block,
+   a long result row — silently forces its column open and pushes the page into
+   horizontal scroll. Overriding it lets those children scroll themselves. */
+.grid > * {
+  min-width: 0;
+}
+
+/* Every column fills the row so the page has no dead band under the panels. */
+.col-instrument,
+.col-brief,
+.col-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .col-instrument {
-  display: flex;
-  flex-direction: column;
   gap: var(--space-4);
   min-height: 68vh;
 }
 
-.col-brief,
-.col-board {
-  position: sticky;
-  top: var(--space-4);
+.col-brief {
+  gap: 0;
+}
+
+/* The schema takes the slack in the brief column, and scrolls if it's a big
+   one, rather than leaving a gap under it. */
+.schema {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Your best sits at the foot of the board column whatever the board's state. */
+.col-board .your-best {
+  margin-top: auto;
+}
+
+.col-board .panel-state {
+  flex: 1;
 }
 
 /* ── Brief ──────────────────────────────────────────────────────────────── */
@@ -372,11 +402,16 @@ button:disabled {
   border-radius: var(--radius-sm);
   padding: var(--space-3);
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   line-height: 1.7;
   color: var(--text-muted);
-  overflow-x: auto;
-  white-space: pre;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  /* Wrap rather than clip: the schema is reference material the player reads
+     all session, and a column definition scrolled out of sight is useless. */
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .brief-note {
