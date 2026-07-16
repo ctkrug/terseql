@@ -12,6 +12,29 @@ import { createWinOverlay } from "./ui/win-overlay.js";
 const BOARD_SIZE = 10;
 
 /**
+ * Strip the shared leading indentation from a template-literal SQL block.
+ *
+ * Puzzle files write `schemaSql` as an indented template literal, so every
+ * line carries the source file's indentation. Rendered as-is, the schema
+ * reads as a ragged staircase — and it's the thing the player stares at all
+ * session, so it has to look like a drawing, not a paste.
+ *
+ * @param {string} text
+ * @returns {string}
+ */
+export function dedent(text) {
+  const lines = String(text ?? "").split("\n");
+  const indents = lines
+    .filter((line) => line.trim())
+    .map((line) => line.match(/^[ \t]*/)[0].length);
+  const shared = indents.length ? Math.min(...indents) : 0;
+  return lines
+    .map((line) => line.slice(shared))
+    .join("\n")
+    .trim();
+}
+
+/**
  * Run one query against a fresh copy of the puzzle's preview database.
  *
  * A new database every time, deliberately: the player is free to write
@@ -154,7 +177,7 @@ export function createApp({
   // page to be one typo in a puzzle file away from an injection.
   $("brief-title").textContent = puzzle.title;
   $("brief-prompt").textContent = puzzle.prompt;
-  $("brief-schema").textContent = puzzle.schemaSql.trim();
+  $("brief-schema").textContent = dedent(puzzle.schemaSql);
 
   const results = createResultPanel($("results"));
   const board = createLeaderboardPanel($("board"));
