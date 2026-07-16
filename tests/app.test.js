@@ -36,6 +36,7 @@ function mount(overrides = {}) {
     clipboard: { writeText: vi.fn(() => Promise.resolve()) },
     execute: vi.fn(() => Promise.resolve({ ok: true, result: { columns: ["a"], values: [[1]] } })),
     grade: vi.fn(() => Promise.resolve({ correct: false, bytes: 10, failedFixture: "preview" })),
+    warm: vi.fn(() => Promise.resolve()),
     ...overrides,
   });
   return { root, app, $: (sel) => root.querySelector(sel) };
@@ -109,6 +110,17 @@ describe("createApp", () => {
   it("marks the results panel as a live region", () => {
     const { $ } = mount();
     expect($("#results").getAttribute("aria-live")).toBe("polite");
+  });
+
+  it("warms the WASM engine at mount, before the player's first Run", () => {
+    const warm = vi.fn(() => Promise.resolve());
+    mount({ warm });
+    expect(warm).toHaveBeenCalledTimes(1);
+  });
+
+  it("mounts fine when warming the engine fails", () => {
+    // The warmup is a head start, not a dependency.
+    expect(() => mount({ warm: () => Promise.reject(new Error("no wasm")) })).not.toThrow();
   });
 });
 
