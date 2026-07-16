@@ -1,0 +1,115 @@
+:root {
+  --bg: #0b1220;
+  --surface-1: #101a30;
+  --surface-2: #16233f;
+  --text: #e8eefc;
+  --text-muted: #8ea0c4;
+  --accent: #5ee1ff;
+  --accent-support: #ffb454;
+  --success: #4ee08a;
+  --danger: #ff6b6b;
+  --grid-line: rgba(94, 225, 255, 0.06);
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 6px;
+  --radius-lg: 10px;
+
+  --shadow-panel: 0 0 0 1px var(--grid-line), 0 8px 24px rgba(0, 0, 0, 0.4);
+  --glow-accent: 0 0 12px rgba(94, 225, 255, 0.35);
+
+  --motion-ui: 150ms ease-out;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+a {
+  color: var(--accent);
+}
+
+button {
+  font-family: var(--font-mono);
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--grid-line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition:
+    transform var(--motion-ui),
+    box-shadow var(--motion-ui),
+    background-color var(--motion-ui);
+}
+
+button:hover {
+  background: var(--surface-1);
+  box-shadow: var(--glow-accent);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
