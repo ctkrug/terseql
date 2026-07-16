@@ -71,11 +71,24 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
   URL, which is not a filesystem path.
 - **The engine is warmed at mount.** ~660KB of WASM compiles while the player reads the prompt
   rather than between their click and the table.
+- **The player's last action owns the results panel.** Run and Submit both write it and both are
+  reachable from the keyboard, so they share one request counter in `app.js`: anything older
+  that resolves late stays silent instead of painting over the answer. A solve still records
+  locally even when its verdict loses the panel — the record is a fact, not a paint.
+- **Only a personal best reaches the shared board.** Posting every correct resubmit would pile
+  duplicate rows onto a public board, or cost a player their standing to their own sloppier
+  second try. Local `recordSolve` keeps every solve; the network only hears about improvements.
+- **A stored `trail` is rebuilt, not trusted.** `recordSolve` only appends strictly better
+  counts, so a real trail descends and ends at `bytes`. `readStore` re-establishes that
+  invariant, because the share card reads the trail and a corrupt one would have the player
+  posting a score they never got.
+- **The win headline is derived from the byte delta**, never computed alongside it — that's how
+  a tie came to be headlined "Shorter" above "Matched your best".
 
 ## Testing
 
-`npm test` (vitest). Node environment by default; DOM-facing suites opt in per file with a
-`// @vitest-environment jsdom` docblock.
+`npm test` (vitest), `npm run test:coverage` for a report. Node environment by default;
+DOM-facing suites opt in per file with a `// @vitest-environment jsdom` docblock.
 
 - Pure logic (`grader`, `share`, streaks, `dedent`, rotation) is tested directly.
 - `src/app.js` takes its engine, network, clipboard and audio as injectable dependencies, so
@@ -85,15 +98,20 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
 - `tests/puzzles.test.js` is parametrized over the registry — every new puzzle is automatically
   held to the catalogue bar (well-formed, 3+ fixtures, reference solution grades correct).
 
+Coverage excludes `src/puzzles/day-*.js` (content, already held to the catalogue bar by the
+parametrized suite) and `src/main.js` (the bootstrap), so the number reports the logic that can
+actually be wrong: **98.6% of lines, 96.5% of branches** across 330 tests.
+
 ## Running it
 
 ```bash
 npm install
-npm run dev      # dev server
-npm test         # full suite
+npm run dev           # dev server
+npm test              # full suite
+npm run test:coverage # full suite + a coverage report
 npm run lint
-npm run build    # → dist/ (landing) + dist/app/ (the app)
-npm run preview  # serve the built app
+npm run build         # → dist/ (landing) + dist/app/ (the app)
+npm run preview       # serve the built site: landing at /, app at /app/
 ```
 
 `npm run build` emits one self-contained directory with **only relative paths**, so it serves
