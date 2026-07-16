@@ -15,8 +15,15 @@ function sanitizeEntry(entry) {
   if (!isPlainObject(entry)) return null;
   if (!Number.isInteger(entry.bytes) || entry.bytes <= 0) return null;
 
-  const trail = Array.isArray(entry.trail)
-    ? entry.trail.filter((bytes) => Number.isInteger(bytes) && bytes > 0)
+  // recordSolve only ever appends a strictly better count, so a real trail
+  // descends and ends at `bytes`. Rebuild that invariant rather than trust
+  // it: the share card reads the trail, so a stored one that ends anywhere
+  // else has the player posting a score they never got. Dropping anything not
+  // better than `bytes` and re-sorting makes this idempotent — a well-formed
+  // trail survives untouched, and any other shape collapses to the best
+  // staircase the entry can still justify.
+  const steps = Array.isArray(entry.trail)
+    ? entry.trail.filter((bytes) => Number.isInteger(bytes) && bytes > entry.bytes)
     : [];
 
   return {
@@ -24,7 +31,7 @@ function sanitizeEntry(entry) {
     solvedAt: typeof entry.solvedAt === "string" ? entry.solvedAt : "",
     // No usable trail (an entry written before trails existed, or a corrupt
     // one) still has a best, which is a one-step staircase.
-    trail: trail.length ? trail : [entry.bytes],
+    trail: [...steps.sort((a, b) => b - a), entry.bytes],
   };
 }
 
