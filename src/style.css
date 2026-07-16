@@ -891,8 +891,8 @@ button:disabled {
   position: absolute;
   top: var(--space-2);
   right: var(--space-2);
-  min-height: 36px;
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0;
   background: transparent;
   border: 1px solid transparent;
@@ -1041,11 +1041,20 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 
-  /* Keep the color feedback, drop the shake. */
+  /* Keep the color feedback, drop the shake and the pulse. Both verdicts
+     need a substitute: the blanket rule above collapses the animation that
+     carried them, so without this a pass reads as no feedback at all. */
   .results.flash-fail {
     animation: none;
     box-shadow:
       0 0 0 1px var(--danger),
       0 0 22px rgba(255, 107, 107, 0.4);
+  }
+
+  .results.flash-pass {
+    animation: none;
+    box-shadow:
+      0 0 0 1px var(--success),
+      0 0 22px rgba(78, 224, 138, 0.4);
   }
 }
