@@ -205,6 +205,10 @@ export function createApp({
   });
 
   let solvedThisSession = false;
+  // Both loops are reachable from the keyboard, which has no equivalent of a
+  // disabled button — so neither can rely on the button to serialize it.
+  let grading = false;
+  let latestRun = 0;
 
   const win = createWinOverlay($("win"), {
     onCopyShare: async () => {
@@ -263,10 +267,17 @@ export function createApp({
       return;
     }
 
+    // Runs race rather than queue: mashing Ctrl+Enter must not make the
+    // player wait out a query they've already replaced. Only the newest run
+    // may paint, so a slow early query can't land on top of a later answer.
+    const token = ++latestRun;
+
     sfx.play("run");
     results.showRunning();
 
     const outcome = await execute(sql, puzzle.previewSetupSql);
+    if (token !== latestRun) return;
+
     if (outcome.ok) {
       results.showResult(outcome.result);
     } else {
@@ -282,7 +293,11 @@ export function createApp({
       results.showIdle();
       return;
     }
+    // A grade is a scored, recorded event: a second one in flight would
+    // double-count the solve and post a duplicate row to the public board.
+    if (grading) return;
 
+    grading = true;
     submitButton.disabled = true;
     submitButton.textContent = "Grading…";
     try {
@@ -323,6 +338,7 @@ export function createApp({
         .then(() => refreshBoard())
         .catch(() => {});
     } finally {
+      grading = false;
       submitButton.disabled = false;
       submitButton.textContent = "Submit";
     }
