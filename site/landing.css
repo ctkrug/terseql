@@ -427,6 +427,117 @@ a:focus-visible {
   font-size: 0.85rem;
 }
 
+/* ── Prose + share card ─────────────────────────────────────────────────── */
+
+.prose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr);
+  gap: var(--space-6);
+  align-items: start;
+  padding: var(--space-7) 0;
+  border-top: 1px solid var(--grid-line);
+}
+
+.prose-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-4);
+}
+
+.prose-main p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  line-height: 1.75;
+  max-width: 68ch;
+}
+
+.prose-main p + p {
+  margin-top: var(--space-4);
+}
+
+.prose-main code,
+.faq code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  color: var(--accent);
+  background: rgba(94, 225, 255, 0.07);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.card-sample {
+  background: var(--surface-1);
+  border: 1px solid var(--grid-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-5);
+  margin: 0;
+  position: sticky;
+  top: var(--space-5);
+}
+
+.card-sample .panel-label {
+  font-size: 0.7rem;
+  color: var(--accent);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: var(--space-3);
+}
+
+.card-sample pre {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre;
+  overflow-x: auto;
+  margin: 0;
+}
+
+.card-note {
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--grid-line);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+/* ── FAQ ────────────────────────────────────────────────────────────────── */
+
+.faq {
+  padding: var(--space-7) 0;
+  border-top: 1px solid var(--grid-line);
+}
+
+.faq-title {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-5);
+}
+
+.faq dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-6);
+  margin: 0;
+}
+
+.faq dt {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.95rem;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--accent);
+}
+
+.faq dd {
+  margin: var(--space-3) 0 var(--space-5);
+  padding-left: var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.7;
+}
+
 /* ── Closer ─────────────────────────────────────────────────────────────── */
 
 .closer {
@@ -482,6 +593,15 @@ a:focus-visible {
   .rules {
     grid-template-columns: 1fr;
   }
+
+  .prose,
+  .faq dl {
+    grid-template-columns: 1fr;
+  }
+
+  .card-sample {
+    position: static;
+  }
 }
 
 @media (max-width: 560px) {
@@ -500,6 +620,12 @@ a:focus-visible {
   .topbar .button-ghost {
     font-size: 0.78rem;
     padding: var(--space-2) var(--space-3);
+  }
+
+  /* The card is fixed-width text: shrink it rather than let it widen the
+     page, and let the pre scroll itself if it still doesn't fit. */
+  .card-sample pre {
+    font-size: 0.7rem;
   }
 }
 

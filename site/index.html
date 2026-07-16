@@ -123,6 +123,96 @@
         </article>
       </section>
 
+      <section class="prose">
+        <div class="prose-main">
+          <h2 class="prose-title display">How a round of SQL golf goes</h2>
+          <p>
+            You open the day's puzzle and read two things: a schema of two or three small tables,
+            and one sentence describing the rows you have to return. Say the goal is each customer's
+            total spend, highest first, skipping anyone who never ordered. You write the obvious
+            query, the one you'd put in a pull request. It runs against a real SQLite database in
+            the browser, the result table appears under the editor, and the byte counter reads 126.
+          </p>
+          <p>
+            That's the starting line, not the finish. Now you start cutting. The alias goes. The
+            <code>AS total</code> goes, because <code>ORDER BY 2</code> can point at the column by
+            position. <code>JOIN ... ON</code> becomes a comma join and a <code>WHERE</code> clause.
+            Whitespace the parser doesn't need goes. Every cut is one Run to prove you didn't break
+            it, and the counter ticks down: 113, 101, 96. Somewhere below that is a query you
+            haven't thought of yet, and someone else already has.
+          </p>
+          <p>
+            Submit grades you against fixtures you never see. This is the part that makes the score
+            mean something. It's easy to write a query that happens to produce the right two rows
+            for the sample data on screen, and much harder to write one that also survives a
+            customer with no orders, a refund that drives a total negative, and two customers tied
+            on the same amount. If your query only fits what you can see, Terseql tells you it
+            passed the sample and failed a hidden case, and it doesn't tell you which one. Working
+            that out is the puzzle.
+          </p>
+        </div>
+
+        <figure class="card-sample">
+          <figcaption class="panel-label">The share card</figcaption>
+          <pre>
+Terseql 2026-07-16 — Top Spenders
+
+🟦🟦🟦🟦🟦🟦🟦🟦🟦🟦 126
+🟦🟦🟦🟦🟦🟦🟦🟦🟦 113
+🟦🟦🟦🟦🟦🟦🟦🟦 101
+🟩🟩🟩🟩🟩🟩🟩🟩 96
+
+96 bytes (4 cuts)
+🔥 4-day streak
+https://apps.charliekrug.com/terseql</pre>
+          <p class="card-note">
+            Your golf trail as a shrinking staircase. It carries no query text, so posting it can't
+            spoil the day for anyone.
+          </p>
+        </figure>
+      </section>
+
+      <section class="faq">
+        <h2 class="faq-title display">Questions</h2>
+        <dl>
+          <dt>What is SQL code golf?</dt>
+          <dd>
+            Writing a query that returns exactly the right rows in as few characters as possible.
+            Correctness is the entry fee; the score is length. Terseql counts UTF-8 bytes, so a
+            multi-byte character costs what it actually costs and you can't buy a lower score with
+            clever glyphs.
+          </dd>
+
+          <dt>Do I need an account?</dt>
+          <dd>
+            No. There's no sign-up and no login. Your best byte count and your streak live in your
+            browser's local storage, which also means clearing site data clears your history.
+          </dd>
+
+          <dt>Which SQL dialect does it accept?</dt>
+          <dd>
+            SQLite, because that's literally what's running: sql.js is the real SQLite engine
+            compiled to WebAssembly. Window functions, CTEs and
+            <code>GROUP BY</code> ordinals all work. Anything SQLite rejects, Terseql rejects, with
+            the same error message.
+          </dd>
+
+          <dt>Can I break the database?</dt>
+          <dd>
+            Go ahead. Every Run gets a fresh copy of the seed data, so
+            <code>DROP TABLE orders</code> costs you nothing but bytes. Grading always uses its own
+            databases, never the one you've been poking at.
+          </dd>
+
+          <dt>Is a new puzzle really posted every day?</dt>
+          <dd>
+            Puzzles are keyed to the UTC calendar date, so everyone in the world gets the same one
+            at the same moment and the board compares like with like. The catalogue is authored
+            ahead; today's is whatever the date says it is.
+          </dd>
+        </dl>
+      </section>
+
       <section class="closer">
         <h2 class="closer-title display">Today's puzzle is waiting.</h2>
         <p class="closer-sub">Come back tomorrow for the next one.</p>
