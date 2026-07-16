@@ -13,7 +13,7 @@ instantly against a real SQLite engine — compiled to WebAssembly via
 hidden suite of edge-case fixtures so you can't just eyeball the sample data and hardcode an
 answer. If it passes, your byte count goes on the board.
 
-The game is the tension between *correct* and *short*: getting the right answer is the floor,
+The game is the tension between _correct_ and _short_: getting the right answer is the floor,
 not the ceiling. The leaderboard is sorted by `LENGTH(query)` in bytes, and shaving one more
 character off a working query is most of the fun.
 

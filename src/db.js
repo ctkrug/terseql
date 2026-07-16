@@ -13,7 +13,9 @@ function loadSqlJs() {
   if (!sqlJsPromise) {
     sqlJsPromise = initSqlJs({
       locateFile: (file) =>
-        isNode ? new URL(`../node_modules/sql.js/dist/${file}`, import.meta.url).pathname : sqlWasmUrl,
+        isNode
+          ? new URL(`../node_modules/sql.js/dist/${file}`, import.meta.url).pathname
+          : sqlWasmUrl,
     });
   }
   return sqlJsPromise;

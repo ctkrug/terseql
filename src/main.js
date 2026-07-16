@@ -52,7 +52,7 @@ function updateByteCount() {
 
 function renderResult(result) {
   if (!result.columns.length) {
-    resultsEl.innerHTML = "<p class=\"empty\">No rows returned.</p>";
+    resultsEl.innerHTML = '<p class="empty">No rows returned.</p>';
     return;
   }
   const head = result.columns.map((col) => `<th>${col}</th>`).join("");
@@ -65,7 +65,7 @@ function renderResult(result) {
 async function runQuery() {
   const query = queryEl.value.trim();
   if (!query) {
-    resultsEl.innerHTML = "<p class=\"empty\">Write a query above, then hit Run.</p>";
+    resultsEl.innerHTML = '<p class="empty">Write a query above, then hit Run.</p>';
     return;
   }
   try {
