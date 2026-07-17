@@ -64,6 +64,8 @@ export function createResultPanel(root) {
     root.dataset.state = name;
   }
 
+  let flashTimer = null;
+
   function showEmpty() {
     state("empty");
     announce("0 rows");
@@ -172,9 +174,15 @@ export function createResultPanel(root) {
       root.classList.remove("flash-pass", "flash-fail");
       void root.offsetWidth; // reflow so a repeat flash re-triggers
       root.classList.add(className);
-      setTimeout(() => root.classList.remove(className), 600);
+      clearTimeout(flashTimer);
+      flashTimer = setTimeout(() => root.classList.remove(className), 600);
     },
 
     getState: () => root.dataset.state,
+
+    /** Cancel the pending flash timer — used when tearing the page down. */
+    destroy() {
+      clearTimeout(flashTimer);
+    },
   };
 }

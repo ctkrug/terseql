@@ -425,6 +425,7 @@ export function createApp({
     destroy() {
       counter.destroy();
       win.destroy();
+      results.destroy();
     },
   };
 }
