@@ -75,20 +75,30 @@ export function createLeaderboardClient({
 } = {}) {
   const enabled = Boolean(endpoint) && typeof fetchImpl === "function";
 
-  async function call(path, init) {
+  // `readBody`, when given, runs under the same abort timer as the request
+  // itself — a server that sends headers and then stalls the body must abort
+  // too, not just one that never answers at all. Its errors are reported as
+  // MALFORMED rather than NETWORK, since the request itself succeeded.
+  async function call(path, init, { readBody } = {}) {
     // AbortController isn't universal; without it we just don't time out.
     const controller = typeof AbortController === "function" ? new AbortController() : null;
     const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
     try {
-      const response = await fetchImpl(`${endpoint}${path}`, {
-        ...init,
-        signal: controller?.signal,
-      });
+      let response;
+      try {
+        response = await fetchImpl(`${endpoint}${path}`, { ...init, signal: controller?.signal });
+      } catch (err) {
+        const reason = err?.name === "AbortError" ? UNAVAILABLE.TIMEOUT : UNAVAILABLE.NETWORK;
+        return { ok: false, reason };
+      }
       if (!response.ok) return { ok: false, reason: UNAVAILABLE.SERVER, status: response.status };
-      return { ok: true, response };
-    } catch (err) {
-      const reason = err?.name === "AbortError" ? UNAVAILABLE.TIMEOUT : UNAVAILABLE.NETWORK;
-      return { ok: false, reason };
+      if (!readBody) return { ok: true, response };
+      try {
+        return { ok: true, response, body: await readBody(response) };
+      } catch (err) {
+        const reason = err?.name === "AbortError" ? UNAVAILABLE.TIMEOUT : UNAVAILABLE.MALFORMED;
+        return { ok: false, reason };
+      }
     } finally {
       if (timer) clearTimeout(timer);
     }
@@ -135,16 +145,18 @@ export function createLeaderboardClient({
       if (!enabled) return { ok: false, reason: UNAVAILABLE.NOT_CONFIGURED };
 
       const query = `?puzzleId=${encodeURIComponent(puzzleId)}&limit=${encodeURIComponent(limit)}`;
-      const result = await call(`/top${query}`, { method: "GET" });
+      const result = await call(
+        `/top${query}`,
+        { method: "GET" },
+        {
+          readBody: (response) => response.json(),
+        },
+      );
       if (!result.ok) return { ok: false, reason: result.reason };
 
-      try {
-        const entries = parseEntries(await result.response.json());
-        if (!entries) return { ok: false, reason: UNAVAILABLE.MALFORMED };
-        return { ok: true, entries: entries.slice(0, limit) };
-      } catch {
-        return { ok: false, reason: UNAVAILABLE.MALFORMED };
-      }
+      const entries = parseEntries(result.body);
+      if (!entries) return { ok: false, reason: UNAVAILABLE.MALFORMED };
+      return { ok: true, entries: entries.slice(0, limit) };
     },
   };
 }

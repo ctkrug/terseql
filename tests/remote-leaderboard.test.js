@@ -240,34 +240,30 @@ describe("fetchTop", () => {
     expect(result).toEqual({ ok: false, reason: UNAVAILABLE.TIMEOUT });
   });
 
-  it(
-    "times out a backend that stalls the body after resolving headers",
-    async () => {
-      // The abort timer historically got cleared the moment fetch() resolved
-      // with headers, so a server that sends a 200 and then never finishes
-      // the body left the board on "Loading…" forever — the timeout only
-      // ever covered the request, not the response.
-      const fetchImpl = vi.fn(
-        (_url, init) =>
-          new Promise((resolve) => {
-            resolve({
-              ok: true,
-              status: 200,
-              json: () =>
-                new Promise((_resolveBody, reject) => {
-                  init.signal?.addEventListener("abort", () => {
-                    const err = new Error("aborted");
-                    err.name = "AbortError";
-                    reject(err);
-                  });
-                }),
-            });
-          }),
-      );
+  it("times out a backend that stalls the body after resolving headers", async () => {
+    // The abort timer historically got cleared the moment fetch() resolved
+    // with headers, so a server that sends a 200 and then never finishes
+    // the body left the board on "Loading…" forever — the timeout only
+    // ever covered the request, not the response.
+    const fetchImpl = vi.fn(
+      (_url, init) =>
+        new Promise((resolve) => {
+          resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              new Promise((_resolveBody, reject) => {
+                init.signal?.addEventListener("abort", () => {
+                  const err = new Error("aborted");
+                  err.name = "AbortError";
+                  reject(err);
+                });
+              }),
+          });
+        }),
+    );
 
-      const result = await client(fetchImpl, { timeoutMs: 10 }).fetchTop("2026-07-16");
-      expect(result).toEqual({ ok: false, reason: UNAVAILABLE.TIMEOUT });
-    },
-    500,
-  );
+    const result = await client(fetchImpl, { timeoutMs: 10 }).fetchTop("2026-07-16");
+    expect(result).toEqual({ ok: false, reason: UNAVAILABLE.TIMEOUT });
+  }, 500);
 });
