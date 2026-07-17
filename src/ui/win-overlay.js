@@ -1,4 +1,5 @@
 const PARTICLE_COUNT = 18;
+const FOCUSABLE_SELECTOR = "button:not([disabled]), [href], input, select, textarea, [tabindex]";
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -77,11 +78,33 @@ export function createWinOverlay(root, options = {}) {
     onClose?.();
   }
 
+  // aria-modal="true" is a promise to assistive tech that Tab can't leave
+  // the dialog. No native <dialog>/showModal() here (unsupported in this
+  // project's jsdom test environment), so the trap is hand-rolled: wrap at
+  // the boundaries, and pull focus back in if it ever lands outside by some
+  // other path (e.g. a programmatic .focus() elsewhere on the page).
+  function trapFocus(event) {
+    const focusable = [...root.querySelectorAll(FOCUSABLE_SELECTOR)];
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    const inside = root.contains(active);
+
+    if (event.shiftKey ? inside && active !== first : inside && active !== last) return;
+
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
+  }
+
   function onKeydown(event) {
     if (event.key === "Escape") {
       event.preventDefault();
       close();
+      return;
     }
+    if (event.key === "Tab") trapFocus(event);
   }
 
   root.addEventListener("keydown", onKeydown);
