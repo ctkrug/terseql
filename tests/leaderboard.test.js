@@ -240,4 +240,23 @@ describe("getCurrentStreak", () => {
   it("is zero for a player who has never solved anything", () => {
     expect(getCurrentStreak(new Date("2026-07-16T12:00:00Z"))).toBe(0);
   });
+
+  it("keeps growing across real days that reuse the same puzzle id", () => {
+    // getPuzzleForDate falls back to the most recent authored puzzle once the
+    // catalogue runs dry, so several real calendar days in a row can all solve
+    // under the identical stale puzzle id. The streak has to track the days the
+    // player actually played, not which puzzle id happened to be on screen —
+    // otherwise it goes permanently stuck at 1 (or dies) the moment the
+    // catalogue runs out, even though the player kept a solve every day.
+    recordSolve("2026-07-20", 50, "2026-07-21T10:00:00Z");
+    recordSolve("2026-07-20", 50, "2026-07-22T10:00:00Z");
+    recordSolve("2026-07-20", 50, "2026-07-23T10:00:00Z");
+    expect(getCurrentStreak(new Date("2026-07-23T12:00:00Z"))).toBe(3);
+  });
+
+  it("breaks like any other streak once a real day is skipped", () => {
+    recordSolve("2026-07-20", 50, "2026-07-20T10:00:00Z");
+    recordSolve("2026-07-20", 50, "2026-07-23T10:00:00Z");
+    expect(getCurrentStreak(new Date("2026-07-23T12:00:00Z"))).toBe(1);
+  });
 });
