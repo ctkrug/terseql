@@ -184,8 +184,12 @@ function previousDay(isoDay) {
  * A streak stays alive while today's puzzle is still unsolved — it's only
  * broken once a day passes with nothing solved — so the most recent solve may
  * be today OR yesterday. Anything older means the run already ended and the
- * streak is 0. Solves are keyed by puzzle id, which is the puzzle's UTC
- * calendar date, so this is pure string date arithmetic with no timezone.
+ * streak is 0.
+ *
+ * Days in, days out: the caller passes the real calendar days a solve was
+ * recorded on (see `recordSolve` for why those are not puzzle ids), already
+ * normalized to UTC `YYYY-MM-DD`, so this is pure string date arithmetic with
+ * no timezone of its own.
  *
  * @param {string[]} solvedDates - ISO `YYYY-MM-DD` strings, any order
  * @param {string} today - ISO `YYYY-MM-DD`
