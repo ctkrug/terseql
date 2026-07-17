@@ -134,6 +134,14 @@ describe("createApp", () => {
     // The warmup is a head start, not a dependency.
     expect(() => mount({ warm: () => Promise.reject(new Error("no wasm")) })).not.toThrow();
   });
+
+  it("advertises both the Run and Submit keyboard shortcuts, not just Run", () => {
+    // Submit is the scored action — the undiscoverable one shouldn't be the
+    // one left out of the hint.
+    const { $ } = mount();
+    expect($("#editor-hint").textContent).toContain("Enter to run");
+    expect($("#editor-hint").textContent).toContain("Shift + Enter to submit");
+  });
 });
 
 describe("byte counter", () => {

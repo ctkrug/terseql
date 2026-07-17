@@ -137,7 +137,9 @@ function markup(dateLabel) {
             aria-describedby="editor-hint"
           ></textarea>
           <div class="editor-actions">
-            <p class="editor-hint" id="editor-hint">⌘/Ctrl + Enter to run</p>
+            <p class="editor-hint" id="editor-hint">
+              ⌘/Ctrl + Enter to run · ⌘/Ctrl + Shift + Enter to submit
+            </p>
             <button type="button" id="run" class="button-ghost">Run</button>
             <button type="button" id="submit" class="button-primary">Submit</button>
           </div>
