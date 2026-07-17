@@ -453,6 +453,24 @@ describe("submit", () => {
     expect($("#results").textContent).toContain("sample data you can see");
   });
 
+  it("keys the visible-vs-hidden message off fixtures[0], not the literal name \"preview\"", async () => {
+    // schema.js documents the convention positionally ("index 0 may equal
+    // the preview"); a magic-string check on the literal name "preview"
+    // would silently mislabel a puzzle whose visible fixture is named
+    // anything else.
+    const puzzle = {
+      ...dayOne,
+      fixtures: [{ ...dayOne.fixtures[0], name: "visible-sample" }, ...dayOne.fixtures.slice(1)],
+    };
+    const grade = () =>
+      Promise.resolve({ correct: false, bytes: 30, failedFixture: "visible-sample" });
+    const { $, app } = mount({ puzzle, grade });
+
+    $("#query").value = "SELECT 1";
+    await app.submit();
+    expect($("#results").textContent).toContain("sample data you can see");
+  });
+
   it("shows a designed error state and re-enables the button when grading throws", async () => {
     // executeQuery (Run) catches everything and degrades to a designed error
     // panel. grade() rejecting — the engine itself failing, not the query
