@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createApp, dedent } from "../src/app.js";
+import { recordSolve } from "../src/leaderboard.js";
 import { dayOne } from "../src/puzzles/day-0001.js";
 import { puzzles } from "../src/puzzles/index.js";
 
@@ -546,13 +547,8 @@ describe("streak", () => {
   });
 
   it("surfaces a streak of two or more days", () => {
-    localStorage.setItem(
-      "terseql:results",
-      JSON.stringify({
-        "2026-07-15": { bytes: 40, solvedAt: "x", trail: [40] },
-        "2026-07-16": { bytes: 38, solvedAt: "x", trail: [38] },
-      }),
-    );
+    recordSolve("2026-07-15", 40, "2026-07-15T10:00:00Z");
+    recordSolve("2026-07-16", 38, "2026-07-16T10:00:00Z");
     const { $ } = mount();
 
     expect($("#streak").hidden).toBe(false);
