@@ -98,6 +98,15 @@ describe("entries", () => {
     panel.showEntries([{ bytes: 49 }]);
     expect(rows()).toHaveLength(1);
   });
+
+  it("still falls back to the empty state when showEntries is destructured off the panel", () => {
+    // showEntries delegates to this.showEmpty(...), which breaks the moment
+    // the panel object is pulled apart, the same shape as the bug fixed in
+    // audio.js's toggleMute and result-table.js's showResult.
+    const { showEntries } = panel;
+    expect(() => showEntries([], { yourBest: 61 })).not.toThrow();
+    expect(panel.getState()).toBe("empty");
+  });
 });
 
 describe("unavailable states", () => {
