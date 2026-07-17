@@ -170,6 +170,17 @@ describe("createSfx — mute", () => {
     sfx.setMuted(false);
     expect(sfx.play("win")).toBe(true);
   });
+
+  it("keeps working when toggleMute is destructured off its object", () => {
+    // createSfx() is built to be injected — app.js passes the whole object
+    // around, and tests destructure it (see silentSfx() in app.test.js).
+    // A method that reaches for `this` breaks the moment it's pulled free.
+    const sfx = createSfx({ contextFactory: fakeContext, storage });
+    const { toggleMute } = sfx;
+
+    expect(() => toggleMute()).not.toThrow();
+    expect(sfx.isMuted()).toBe(true);
+  });
 });
 
 describe("createSfx — degradation", () => {
