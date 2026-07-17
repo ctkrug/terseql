@@ -72,7 +72,7 @@ It carries no query text, so pasting it in a group chat can't spoil the day for 
 ```bash
 npm install
 npm run dev           # dev server
-npm test              # full suite (330 tests)
+npm test              # full suite (344 tests)
 npm run test:coverage # full suite + a coverage report
 npm run lint
 npm run build         # -> dist/ (landing page) + dist/app/ (the app)
