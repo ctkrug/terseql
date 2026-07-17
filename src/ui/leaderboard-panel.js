@@ -1,4 +1,5 @@
 import { UNAVAILABLE } from "../remote-leaderboard.js";
+import { el } from "./dom.js";
 
 /**
  * Player-facing copy for each way the board can be unavailable. Every reason
@@ -32,13 +33,6 @@ const FALLBACK_COPY = {
   title: "Board unavailable",
   hint: "Your solves still count locally.",
 };
-
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 /**
  * Your personal best, rendered in the support accent (amber) so it reads as

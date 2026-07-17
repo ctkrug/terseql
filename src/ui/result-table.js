@@ -1,3 +1,5 @@
+import { el } from "./dom.js";
+
 const MAX_ROWS_RENDERED = 200;
 
 /**
@@ -15,13 +17,6 @@ export function formatCell(value) {
   if (typeof value === "number") return { text: String(value), className: "cell-number" };
   if (value instanceof Uint8Array) return { text: `blob(${value.length})`, className: "cell-blob" };
   return { text: String(value), className: "cell-text" };
-}
-
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
 }
 
 /**

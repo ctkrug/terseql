@@ -1,16 +1,7 @@
+import { el, prefersReducedMotionByDefault } from "./dom.js";
+
 const PARTICLE_COUNT = 18;
 const FOCUSABLE_SELECTOR = "button:not([disabled]), [href], input, select, textarea, [tabindex]";
-
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
-
-function prefersReducedMotionByDefault() {
-  return Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
-}
 
 /**
  * How this solve compares to the player's previous best on the same puzzle.

@@ -1,9 +1,7 @@
+import { prefersReducedMotionByDefault } from "./dom.js";
+
 const ROLL_CLASS = "is-rolling";
 const ROLL_MS = 90;
-
-function prefersReducedMotionByDefault() {
-  return Boolean(globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
-}
 
 /**
  * The instrument-dial byte readout — the app's signature detail.
