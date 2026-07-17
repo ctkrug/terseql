@@ -358,6 +358,12 @@ export function createApp({
       solvedThisSession = true;
 
       renderStreak();
+      // Disabling submitButton mid-grade can already have blurred it (real
+      // browsers do this on disable; jsdom doesn't), so "whatever was last
+      // focused" is not reliable by the time the overlay opens. Hand it the
+      // editor explicitly — the overlay's own close() sends focus back to
+      // whatever was focused when show() was called.
+      editor.focus();
       win.show({
         bytes: verdict.bytes,
         previousBest,
