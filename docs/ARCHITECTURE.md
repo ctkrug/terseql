@@ -39,6 +39,7 @@ site/ ──► the landing page (own HTML/CSS, same tokens)
 | `src/ui/result-table.js`      | Result rendering plus idle/running/empty/error states                               |
 | `src/ui/leaderboard-panel.js` | Board rendering plus every "unavailable" state                                      |
 | `src/ui/win-overlay.js`       | The win moment; owns no solve state                                                 |
+| `src/ui/dom.js`               | `el()` and `prefersReducedMotionByDefault()`, shared by the four modules above      |
 | `src/puzzles/`                | One file per day + `index.js` (rotation) + `schema.js` (shape + validation)         |
 
 ## Data flow
@@ -81,9 +82,10 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
   reachable from the keyboard, so they share one request counter in `app.js`: anything older
   that resolves late stays silent instead of painting over the answer. A solve still records
   locally even when its verdict loses the panel — the record is a fact, not a paint. When a
-  panel-owning Submit passes, it re-runs the query against its own preview seed (the preview
-  fixture and `previewSetupSql` are authored identically) purely to paint that result — `flash()`
-  is a decoration on top of real content, not a substitute for it.
+  panel-owning Submit passes, it re-runs the query against its own preview seed purely to paint
+  that result — `flash()` is a decoration on top of real content, not a substitute for it. This
+  depends on `fixtures[0].setupSql` matching `previewSetupSql` exactly; every puzzle derives
+  both from one constant instead of retyping the SQL, so the two can't drift.
 - **The results panel's `aria-live` region is a dedicated status paragraph, not the panel
   itself.** `#results` can hold an up-to-200-row table; announcing that whole subtree on every
   Run is unusable for a screen reader. Only a one-line summary ("12 rows", the error text) is
@@ -97,6 +99,9 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
   posting a score they never got.
 - **The win headline is derived from the byte delta**, never computed alongside it — that's how
   a tie came to be headlined "Shorter" above "Matched your best".
+- **The win overlay's focus trap is hand-rolled, not `<dialog>`/`showModal()`.** This project's
+  jsdom test environment doesn't implement `showModal` at all, so a native dialog couldn't be
+  covered by the suite. Tab/Shift+Tab wrap manually at the overlay's first/last controls instead.
 
 ## Testing
 
@@ -113,7 +118,13 @@ DOM-facing suites opt in per file with a `// @vitest-environment jsdom` docblock
 
 Coverage excludes `src/puzzles/day-*.js` (content, already held to the catalogue bar by the
 parametrized suite) and `src/main.js` (the bootstrap), so the number reports the logic that can
-actually be wrong: **98.9% of lines, 97.3% of branches** across 345 tests.
+actually be wrong: **99.0% of lines, 96.8% of branches** across 370 tests.
+
+Live-browser gotcha worth knowing before trusting a jsdom-only result: jsdom does not blur a
+focused element when it's disabled, but real browsers do. `app.js`'s Submit flow disables its
+own button before grading starts, so a test that never simulates a real focus/click first won't
+see the button lose focus the way it does in Chromium — confirmed with Playwright against the
+dev server, not the jsdom suite alone.
 
 ## Running it
 
