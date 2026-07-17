@@ -606,6 +606,27 @@ describe("leaderboard", () => {
 
     expect($("#board").textContent).toContain("Offline");
   });
+
+  it("does not let an early, slower board fetch overwrite a later, faster one", async () => {
+    // The mount-time refreshBoard() can still be in flight when a fast solve
+    // fires the post-submit one; this is the same race `latestRequest`
+    // already solves for the results panel, applied to the board.
+    const slow = deferred();
+    const fast = deferred();
+    const fetchTop = vi.fn().mockReturnValueOnce(slow.promise).mockReturnValueOnce(fast.promise);
+    const leaderboard = { isEnabled: () => true, submit: vi.fn(), fetchTop };
+    const { $, app } = mount({ leaderboard }); // mount() itself fires the first (slow) refresh
+
+    const second = app.refreshBoard();
+    fast.resolve({ ok: true, entries: [{ bytes: 49, name: "fresh" }] });
+    await second;
+
+    slow.resolve({ ok: true, entries: [{ bytes: 90, name: "stale" }] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect($("#board").textContent).toContain("fresh");
+    expect($("#board").textContent).not.toContain("stale");
+  });
 });
 
 describe("streak", () => {
