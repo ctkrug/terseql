@@ -144,6 +144,15 @@ describe("createResultPanel", () => {
     expect(panel.getState()).toBe("empty");
   });
 
+  it("still falls back to the empty state when showResult is destructured off the panel", () => {
+    // showResult delegates to this.showEmpty(), which breaks the moment the
+    // panel object is pulled apart — and app.js is built to accept an
+    // injected panel, the exact shape a caller might destructure.
+    const { showResult } = panel;
+    expect(() => showResult(undefined)).not.toThrow();
+    expect(panel.getState()).toBe("empty");
+  });
+
   it("distinguishes 'no rows' from an error", () => {
     panel.showEmpty();
     expect(panel.getState()).toBe("empty");
