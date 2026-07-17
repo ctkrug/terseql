@@ -28,6 +28,12 @@ function loadSqlJs() {
   if (!sqlJsPromise) {
     sqlJsPromise = initSqlJs({
       locateFile: (file) => (isNode ? nodeWasmPath(file) : sqlWasmUrl),
+    }).catch((err) => {
+      // A rejection is not memoized: a mobile blip or CDN hiccup on the
+      // WASM fetch should cost the player one failed query, not the rest of
+      // the session. Only a resolved engine is worth caching.
+      sqlJsPromise = undefined;
+      throw err;
     });
   }
   return sqlJsPromise;
