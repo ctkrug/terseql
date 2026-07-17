@@ -1,15 +1,17 @@
 import { createDatabase, createSeededDatabase } from "./db.js";
 import { byteLength, gradeQuery } from "./grader.js";
 import { getBest, getCurrentStreak, recordSolve } from "./leaderboard.js";
-import { UNAVAILABLE, leaderboardClient } from "./remote-leaderboard.js";
+import {
+  DEFAULT_LIMIT as BOARD_SIZE,
+  UNAVAILABLE,
+  leaderboardClient,
+} from "./remote-leaderboard.js";
 import { formatShareCard } from "./share.js";
 import { sfx as defaultSfx } from "./audio.js";
 import { createByteCounter } from "./ui/byte-counter.js";
 import { createLeaderboardPanel } from "./ui/leaderboard-panel.js";
 import { createResultPanel } from "./ui/result-table.js";
 import { createWinOverlay } from "./ui/win-overlay.js";
-
-const BOARD_SIZE = 10;
 
 /**
  * Strip the shared leading indentation from a template-literal SQL block.

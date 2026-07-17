@@ -1,5 +1,11 @@
 const DEFAULT_TIMEOUT_MS = 4000;
-const DEFAULT_LIMIT = 10;
+
+/**
+ * How many rows fetchTop returns when a caller doesn't specify — and what
+ * app.js's board panel actually asks for. One constant, not two that have
+ * to be kept in sync by hand.
+ */
+export const DEFAULT_LIMIT = 10;
 
 /**
  * Reasons a leaderboard call can come back empty. The UI maps these to a
