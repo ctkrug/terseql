@@ -74,6 +74,16 @@ export function createLeaderboardPanel(root) {
     root.append(...children);
   }
 
+  /** Nobody has posted a score yet — a designed state, not a blank area. */
+  function showEmpty({ yourBest = null } = {}) {
+    const wrap = el("div", "panel-state");
+    wrap.append(
+      el("p", "panel-state-title", "First blood"),
+      el("p", "panel-state-hint", "Nobody's posted a score today. Go set the bar."),
+    );
+    replace("empty", wrap, yourBestRow(yourBest));
+  }
+
   return {
     getState: () => root.dataset.state,
 
@@ -87,7 +97,7 @@ export function createLeaderboardPanel(root) {
      * @param {number|null} [options.yourBest]
      */
     showEntries(entries, { yourBest = null } = {}) {
-      if (!entries.length) return this.showEmpty({ yourBest });
+      if (!entries.length) return showEmpty({ yourBest });
 
       const list = el("ol", "board-list");
       let yourRowMarked = false;
@@ -110,17 +120,7 @@ export function createLeaderboardPanel(root) {
       replace("entries", el("p", "panel-label", "Today's shortest"), list, yourBestRow(yourBest));
     },
 
-    /**
-     * Nobody has posted a score yet — a designed state, not a blank area.
-     */
-    showEmpty({ yourBest = null } = {}) {
-      const wrap = el("div", "panel-state");
-      wrap.append(
-        el("p", "panel-state-title", "First blood"),
-        el("p", "panel-state-hint", "Nobody's posted a score today. Go set the bar."),
-      );
-      replace("empty", wrap, yourBestRow(yourBest));
-    },
+    showEmpty,
 
     /**
      * @param {string} reason - a value from UNAVAILABLE
