@@ -236,6 +236,20 @@ describe("share card copy", () => {
     expect(button.textContent).toBe("Copy failed");
     vi.useRealTimers();
   });
+
+  it("does not claim success when there is no onCopyShare to call", async () => {
+    // onCopyShare?.() resolves to undefined when the callback is absent —
+    // undefined !== false must not read as "it worked".
+    vi.useFakeTimers();
+    overlay({ onCopyShare: undefined }).show({ bytes: 61 });
+
+    const button = root.querySelector(".button-primary");
+    button.click();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(button.textContent).toBe("Copy failed");
+    vi.useRealTimers();
+  });
 });
 
 describe("particles", () => {
