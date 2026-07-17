@@ -151,7 +151,7 @@ then the fix, then the regression test named in the story.
   - `db.js:loadSqlJs` memoized `sqlJsPromise` including its _rejection_, so one failed WASM
     fetch bricked every later `createDatabase()` for the rest of the page's life.
   - Fixed by clearing the cache on rejection (`loadSqlJs().catch(() => { sqlJsPromise =
-    undefined; throw err; })`), so the next call retries the fetch. `warmEngine`'s "the first
+undefined; throw err; })`), so the next call retries the fetch. `warmEngine`'s "the first
     real query pays the cost and reports its own error" comment is now true, since a warm-up
     failure no longer poisons the cache. Regression test: `tests/db.test.js` ("does not brick
     the session after one rejected engine load").
@@ -213,16 +213,16 @@ then the fix, then the regression test named in the story.
 All done in the same pass as 5.1–5.8:
 
 - [x] `el(tag, className, text)` and `prefersReducedMotionByDefault()` extracted into
-  `src/ui/dom.js`, imported by every module that used to redefine them.
+      `src/ui/dom.js`, imported by every module that used to redefine them.
 - [x] `audio.js:toggleMute`'s `this.setMuted(...)` (and the same shape in `result-table.js`'s
-  `showResult`/`showEmpty` and `leaderboard-panel.js`'s `showEntries`/`showEmpty`) replaced with
-  closures the returned object references directly — safe to destructure.
+      `showResult`/`showEmpty` and `leaderboard-panel.js`'s `showEntries`/`showEmpty`) replaced with
+      closures the returned object references directly — safe to destructure.
 - [x] `db.js:createSeededDatabase` now closes the database if `run(setupSql)` throws.
 - [x] `win-overlay.js`'s copy button now requires `ok === true` before claiming "Copied!".
 - [x] `app.js` imports `DEFAULT_LIMIT` from `remote-leaderboard.js` instead of a second
-  `BOARD_SIZE` constant.
+      `BOARD_SIZE` constant.
 - [x] The editor hint now advertises both `⌘/Ctrl + Enter to run` and
-  `⌘/Ctrl + Shift + Enter to submit`.
+      `⌘/Ctrl + Shift + Enter to submit`.
 - [x] `remote-leaderboard.js:call` no longer returns the unread `status` field.
 - [x] `result-table.js` now exposes `destroy()` (cancels the pending flash timer), and
-  `app.js`'s `destroy()` calls it alongside its sibling components.
+      `app.js`'s `destroy()` calls it alongside its sibling components.
