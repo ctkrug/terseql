@@ -105,6 +105,44 @@ describe("createWinOverlay", () => {
 
     expect(document.activeElement).toBe(editor);
   });
+
+  it("traps forward Tab, wrapping past the last control back to the first", () => {
+    // aria-modal="true" promises assistive tech a real focus trap. Without
+    // one, Tab walks straight out into the page behind an overlay that's
+    // still covering it.
+    overlay().show({ bytes: 61 });
+    const first = root.querySelector(".button-primary");
+    const last = root.querySelector(".win-close");
+
+    last.focus();
+    root.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(first);
+  });
+
+  it("traps backward Shift+Tab, wrapping before the first control to the last", () => {
+    overlay().show({ bytes: 61 });
+    const first = root.querySelector(".button-primary");
+    const last = root.querySelector(".win-close");
+
+    first.focus();
+    root.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true, cancelable: true }),
+    );
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("pulls focus back in if it somehow lands outside the overlay while open", () => {
+    const editor = document.getElementById("editor");
+    overlay().show({ bytes: 61 });
+    editor.focus(); // simulates focus escaping by some path other than Tab
+
+    root.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }),
+    );
+    expect(root.contains(document.activeElement)).toBe(true);
+  });
 });
 
 describe("dismissal", () => {
