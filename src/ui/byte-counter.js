@@ -41,6 +41,12 @@ export function createByteCounter(root, options = {}) {
     // Rebuild only when the digit count changes; otherwise reuse the elements
     // so a digit mid-roll isn't yanked out from under its own animation.
     if (lengthChanged || root.children.length !== nextDigits.length) {
+      // Every span about to be detached takes its roll timer with it —
+      // otherwise the timer keeps firing against a node no longer in the
+      // document, and the Map keeps a dead reference for the rest of the
+      // session.
+      timers.forEach((timer) => clearTimeout(timer));
+      timers.clear();
       root.textContent = "";
       for (const char of nextDigits) {
         const span = document.createElement("span");
