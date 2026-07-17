@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createResultPanel, formatCell } from "../src/ui/result-table.js";
 
 let root;
@@ -204,5 +204,20 @@ describe("createResultPanel", () => {
     panel.flash("pass");
     expect(root.classList.contains("flash-pass")).toBe(true);
     expect(root.classList.contains("flash-fail")).toBe(false);
+  });
+});
+
+describe("destroy", () => {
+  it("cancels the pending flash timer", () => {
+    // flash() leaves a 600ms setTimeout behind; its sibling components
+    // (byte-counter, win-overlay) both expose a destroy() app.js calls on
+    // teardown, but this one had none to cancel its own timer.
+    vi.useFakeTimers();
+    panel.flash("pass");
+    expect(vi.getTimerCount()).toBe(1);
+
+    panel.destroy();
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
   });
 });
