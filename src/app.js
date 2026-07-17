@@ -313,10 +313,10 @@ export function createApp({
       const verdict = await grade(sql, puzzle);
       // A Run started after this Submit owns the panel now; the grade still
       // counts, it just doesn't get to repaint what the player moved on to.
-      const ownsPanel = token === latestRequest;
+      const stillOwnsPanel = () => token === latestRequest;
 
       if (!verdict.correct) {
-        if (!ownsPanel) return;
+        if (!stillOwnsPanel()) return;
         results.flash("fail");
         sfx.play("fail");
         // Name the fixture, never its data — that's the hidden half of the
@@ -332,7 +332,17 @@ export function createApp({
       const previousBest = getBest(puzzle.id)?.bytes ?? null;
       recordSolve(puzzle.id, verdict.bytes, now.toISOString());
 
-      if (ownsPanel) results.flash("pass");
+      if (stillOwnsPanel()) {
+        // flash() is decorative feedback on top of real content, not a
+        // substitute for it — without this, a passing Submit left whatever
+        // the panel said before (idle, or a stale "Running…" from a Run it
+        // outraced) instead of showing the query's own result.
+        const preview = await execute(sql, puzzle.previewSetupSql);
+        if (stillOwnsPanel()) {
+          if (preview.ok) results.showResult(preview.result);
+          results.flash("pass");
+        }
+      }
       sfx.play(solvedThisSession ? "pass" : "win");
       solvedThisSession = true;
 

@@ -281,6 +281,35 @@ describe("run", () => {
     expect($("#results").dataset.state).toBe("error");
     expect($("#results").textContent).not.toContain("late");
   });
+
+  it("replaces a stale Running… panel once an outraced Run's verdict passes", async () => {
+    // Click Run, click Submit before it resolves, submit a correct query: the
+    // panel must not still read "Running…" once the passing Submit lands.
+    const slowRun = deferred();
+    const execute = vi
+      .fn()
+      .mockImplementationOnce(() => slowRun.promise)
+      .mockImplementation(() =>
+        Promise.resolve({ ok: true, result: { columns: ["a"], values: [[1]] } }),
+      );
+    const { $, app } = mount({
+      execute,
+      grade: () => Promise.resolve({ correct: true, bytes: 61, failedFixture: null }),
+    });
+
+    $("#query").value = "SELECT 1";
+    const running = app.run();
+    expect($("#results").dataset.state).toBe("running");
+
+    await app.submit();
+    expect($("#results").dataset.state).toBe("result");
+
+    slowRun.resolve({ ok: true, result: { columns: ["stale"], values: [[99]] } });
+    await running;
+
+    expect($("#results").dataset.state).toBe("result");
+    expect($("#results").textContent).not.toContain("stale");
+  });
 });
 
 describe("submit", () => {
@@ -305,6 +334,22 @@ describe("submit", () => {
     expect($("#win").hidden).toBe(false);
     expect($(".win-bytes").textContent).toBe("61");
     expect($(".win-delta").textContent).toBe("First solve");
+  });
+
+  it("paints the query's own result into the panel, not just idle plus a flash", async () => {
+    // A bare Submit — no Run first — must not leave "Nothing run yet" behind
+    // its own passing verdict; flash() is a decoration on real content, not a
+    // substitute for it.
+    const execute = vi.fn(() =>
+      Promise.resolve({ ok: true, result: { columns: ["name"], values: [["Ada"]] } }),
+    );
+    const { $, app } = mount({ execute, grade: () => Promise.resolve(passing) });
+
+    $("#query").value = "SELECT 1";
+    await app.submit();
+
+    expect($("#results").dataset.state).toBe("result");
+    expect($("#results").textContent).toContain("Ada");
   });
 
   it("plays the win sound the first time and the pass sound after", async () => {
