@@ -58,8 +58,14 @@ Every run and every fixture gets a brand-new database. The player may legitimate
 
 - **Column names are not graded**, only column count, column order, and row order. Charging a
   golfer bytes for `AS total` would tax a label nobody reads. Pinned in `tests/grader.test.js`.
-- **Puzzle ids are their UTC date** (`2026-07-16`). Rotation is a date lookup, streaks are runs
-  of consecutive ids — so streak math is plain string arithmetic with no timezones.
+- **Puzzle ids are their UTC date** (`2026-07-16`) and rotation is a date lookup — but a puzzle
+  id is NOT a reliable stand-in for "the day the player played." `getPuzzleForDate` re-serves
+  the most recent authored puzzle once the catalogue runs dry, so several real days can share
+  one puzzle id. Streaks are therefore tracked in their own store
+  (`leaderboard.js`'s `terseql:solved-days`), keyed off `solvedAt` and written on every correct
+  solve regardless of whether it improved that puzzle's personal best — decoupled from the
+  per-puzzle best store entirely. Streak math itself is still plain string arithmetic on
+  `YYYY-MM-DD` days, no timezones.
 - **The grader never reports _which_ hidden fixture failed** to the player, only that one did.
   The hidden half is half the puzzle.
 - **Nothing that reaches the network carries query text.** The board is public; shipping the
@@ -74,7 +80,14 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
 - **The player's last action owns the results panel.** Run and Submit both write it and both are
   reachable from the keyboard, so they share one request counter in `app.js`: anything older
   that resolves late stays silent instead of painting over the answer. A solve still records
-  locally even when its verdict loses the panel — the record is a fact, not a paint.
+  locally even when its verdict loses the panel — the record is a fact, not a paint. When a
+  panel-owning Submit passes, it re-runs the query against its own preview seed (the preview
+  fixture and `previewSetupSql` are authored identically) purely to paint that result — `flash()`
+  is a decoration on top of real content, not a substitute for it.
+- **The results panel's `aria-live` region is a dedicated status paragraph, not the panel
+  itself.** `#results` can hold an up-to-200-row table; announcing that whole subtree on every
+  Run is unusable for a screen reader. Only a one-line summary ("12 rows", the error text) is
+  ever announced, via a visually-hidden node inside `createResultPanel`.
 - **Only a personal best reaches the shared board.** Posting every correct resubmit would pile
   duplicate rows onto a public board, or cost a player their standing to their own sloppier
   second try. Local `recordSolve` keeps every solve; the network only hears about improvements.
@@ -100,7 +113,7 @@ DOM-facing suites opt in per file with a `// @vitest-environment jsdom` docblock
 
 Coverage excludes `src/puzzles/day-*.js` (content, already held to the catalogue bar by the
 parametrized suite) and `src/main.js` (the bootstrap), so the number reports the logic that can
-actually be wrong: **98.6% of lines, 96.5% of branches** across 330 tests.
+actually be wrong: **98.8% of lines, 97.1% of branches** across 344 tests.
 
 ## Running it
 
