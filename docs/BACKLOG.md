@@ -102,8 +102,9 @@ byte count fall as you trim the query.
     `AudioContext` is created lazily on first user gesture, not on page load.
 
 - [x] **3.3 — Accessibility pass**
-  - All icon-only buttons (e.g. the mute toggle) have an `aria-label`; the results area is an
-    `aria-live` region that announces pass/fail state changes.
+  - All icon-only buttons (e.g. the mute toggle) have an `aria-label`; the results area has a
+    dedicated `aria-live` status line that announces pass/fail state changes as a short summary
+    (not the visible table content — see defect 4.3).
   - Every interactive element is reachable and operable via Tab + Enter/Space alone, with a
     visible focus ring.
 
@@ -112,26 +113,31 @@ byte count fall as you trim the query.
     and fonts as the app, buildable to one output directory with relative asset paths.
   - The landing page includes a favicon matching the app's and no placeholder/lorem-ipsum copy.
 
-## Known defects (found at closeout, not yet fixed)
+## Known defects (found at closeout)
 
-- [ ] **4.1 — A solve on a fallback day doesn't count toward the streak**
-  - `getPuzzleForDate` serves the most recent past puzzle when today has none authored, but
-    `recordSolve` keys the solve to the _puzzle's_ id, while `computeStreak` counts _calendar
-    days_. Those agree only while a puzzle exists for every day.
-  - The catalogue ends `2026-07-20`. From `2026-07-22`, a player who solves every single day
-    has a streak of 0 permanently, and every solve re-posts to the `2026-07-20` board.
-  - Fix direction: record the day the player solved (`solvedAt`) as the streak's key, so the
-    streak survives any gap in the catalogue. Decide separately whether an exhausted catalogue
-    should rotate, repeat, or say so.
+- [x] **4.1 — A solve on a fallback day doesn't count toward the streak** — fixed.
+  - `getPuzzleForDate` serves the most recent past puzzle when today has none authored, so
+    `recordSolve` keying the streak to the _puzzle's_ id (while `computeStreak` counted
+    _calendar days_) let a solve on a fallback day vanish from the streak once the catalogue
+    ran out.
+  - Fixed by recording every solved calendar day (`solvedAt`, not the puzzle id) in its own
+    `terseql:solved-days` store, written unconditionally on every correct solve. The streak
+    now survives catalogue exhaustion. Regression tests: `tests/leaderboard.test.js`
+    ("keeps growing across real days that reuse the same puzzle id").
 
-- [ ] **4.2 — The results panel can stick on "Running…"**
-  - `run()` paints "Running…" and only `run()` clears it. A Submit that supersedes an
-    in-flight Run (`token !== latestRequest`) makes the run return silently, and a passing
-    grade only calls `results.flash("pass")`, which is decorative and replaces no content.
-  - Repro: click Run, click Submit before it resolves, submit a correct query, dismiss the win
-    overlay. The panel reads "Running…" until the next Run.
+- [x] **4.2 — The results panel can stick on "Running…"** — fixed.
+  - `run()` painted "Running…" and only `run()` cleared it. A Submit that supersedes an
+    in-flight Run made the run return silently, and a passing grade only called
+    `results.flash("pass")`, which is decorative and replaced no content — a bare Submit with
+    no prior Run left the idle state showing behind its own win.
+  - Fixed by re-running the query against its own preview seed on a passing, panel-owning
+    submit and painting that result. Regression tests: `tests/app.test.js` ("paints the
+    query's own result…", "replaces a stale Running… panel…").
 
-- [ ] **4.3 — The results live region announces whole tables**
-  - `#results` is `aria-live="polite"` and receives an up-to-200-row `<table>`, so a screen
-    reader queues the entire table on every Run. Consider moving the live region to a short
-    summary node ("12 rows") and leaving the table out of it.
+- [x] **4.3 — The results live region announces whole tables** — fixed.
+  - `#results` was itself `aria-live="polite"` and received an up-to-200-row `<table>`, so a
+    screen reader queued the entire table on every Run.
+  - Fixed by moving the live region to a dedicated visually-hidden status paragraph that only
+    ever receives a one-line summary ("12 rows", the error text); the visible table renders
+    outside it. Regression tests: `tests/result-table.test.js` ("announces a short summary,
+    never the table itself").
