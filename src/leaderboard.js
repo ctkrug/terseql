@@ -1,4 +1,5 @@
 const STORAGE_KEY = "terseql:results";
+const STREAK_KEY = "terseql:solved-days";
 
 function isPlainObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -72,6 +73,39 @@ function writeStore(store) {
   }
 }
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Every distinct calendar day (UTC) the player has recorded a solve on,
+ * ascending. Sanitized the same way `readStore` is: hand-editable, shared
+ * storage means a malformed value here should be dropped, not thrown on.
+ * @returns {string[]}
+ */
+function readSolvedDays() {
+  let parsed;
+  try {
+    const raw = localStorage.getItem(STREAK_KEY);
+    parsed = raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const days = new Set(parsed.filter((day) => typeof day === "string" && ISO_DAY.test(day)));
+  return [...days].sort();
+}
+
+function addSolvedDay(solvedAt) {
+  const day = typeof solvedAt === "string" ? solvedAt.slice(0, 10) : "";
+  if (!ISO_DAY.test(day)) return;
+  const days = new Set(readSolvedDays());
+  days.add(day);
+  try {
+    localStorage.setItem(STREAK_KEY, JSON.stringify([...days].sort()));
+  } catch {
+    // best-effort; a failed write just means today doesn't extend the streak
+  }
+}
+
 /**
  * Record a passing solve for a puzzle, keeping the player's best (lowest)
  * byte count.
@@ -80,6 +114,15 @@ function writeStore(store) {
  * improvement at the time — the staircase of a player golfing 96 → 74 → 61.
  * It's what the share card renders, and it's the shape of the game, so it's
  * worth persisting rather than holding in page memory that a reload drops.
+ *
+ * Every correct solve also extends the calendar-day streak record,
+ * independent of and unconditional on whether it improved this puzzle's
+ * best. Puzzle ids are NOT reliable as calendar days for this purpose:
+ * `getPuzzleForDate` re-serves the most recent authored puzzle once the
+ * catalogue runs dry, so several distinct real days can share one puzzle
+ * id, and keying streaks off puzzle ids would make the streak die (or get
+ * stuck) the moment that happens. `solvedAt` is always the real wall-clock
+ * day the player played, so that's what the streak is built from.
  *
  * @param {string} puzzleId
  * @param {number} bytes
@@ -97,6 +140,7 @@ export function recordSolve(puzzleId, bytes, solvedAt) {
     store[puzzleId] = { bytes, solvedAt, trail: [...existing.trail, bytes] };
   }
   writeStore(store);
+  addSolvedDay(solvedAt);
   return store[puzzleId];
 }
 
@@ -163,10 +207,20 @@ export function computeStreak(solvedDates, today) {
 }
 
 /**
+ * Every distinct calendar day (UTC) the player has recorded a correct solve
+ * on, ascending. This is what streaks are built from — see the note on
+ * `recordSolve` for why it's tracked separately from puzzle ids.
+ * @returns {string[]}
+ */
+export function getSolvedCalendarDays() {
+  return readSolvedDays();
+}
+
+/**
  * The player's current solve streak in days.
  * @param {Date} [now]
  * @returns {number}
  */
 export function getCurrentStreak(now = new Date()) {
-  return computeStreak(getSolvedPuzzleIds(), now.toISOString().slice(0, 10));
+  return computeStreak(getSolvedCalendarDays(), now.toISOString().slice(0, 10));
 }
