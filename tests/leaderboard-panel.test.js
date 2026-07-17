@@ -135,4 +135,25 @@ describe("unavailable states", () => {
     expect(root.querySelector(".panel-state-title").textContent).toBe("Board unavailable");
     expect(root.dataset.reason).toBe("unknown");
   });
+
+  it("clears the reason once a later state isn't unavailable", () => {
+    // An offline refresh followed by a good one must not leave
+    // data-state="entries" data-reason="network" — an attribute
+    // contradicting the state it's attached to.
+    panel.showUnavailable(UNAVAILABLE.NETWORK);
+    expect(root.dataset.reason).toBe(UNAVAILABLE.NETWORK);
+
+    panel.showEntries([{ bytes: 61, name: "ada" }]);
+    expect(root.dataset.reason).toBeUndefined();
+  });
+
+  it("never sets a reason on loading or empty states", () => {
+    panel.showUnavailable(UNAVAILABLE.NETWORK);
+    panel.showLoading();
+    expect(root.dataset.reason).toBeUndefined();
+
+    panel.showUnavailable(UNAVAILABLE.NETWORK);
+    panel.showEmpty();
+    expect(root.dataset.reason).toBeUndefined();
+  });
 });
