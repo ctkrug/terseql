@@ -476,7 +476,7 @@ describe("submit", () => {
         new KeyboardEvent("keydown", { key: "Enter", ctrlKey: true, shiftKey: true }),
       );
     }
-    await vi.waitFor(() => expect(grade).toHaveBeenCalled());
+    await vi.waitFor(() => expect(leaderboard.submit).toHaveBeenCalled());
 
     expect(grade).toHaveBeenCalledTimes(1);
     expect(leaderboard.submit).toHaveBeenCalledTimes(1);
