@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   computeStreak,
   getBest,
@@ -191,9 +191,29 @@ describe("getSolvedCalendarDays", () => {
     expect(getSolvedCalendarDays()).toEqual([]);
   });
 
+  it("ignores a solvedAt that is not even a string", () => {
+    expect(() => recordSolve("2026-07-16", 1, undefined)).not.toThrow();
+    expect(getSolvedCalendarDays()).toEqual([]);
+  });
+
   it("survives a corrupted solved-days store instead of throwing", () => {
     localStorage.setItem("terseql:solved-days", '"not-an-array"');
     expect(() => getSolvedCalendarDays()).not.toThrow();
+    expect(getSolvedCalendarDays()).toEqual([]);
+  });
+
+  it("survives unparseable JSON in the solved-days store", () => {
+    localStorage.setItem("terseql:solved-days", "{not json");
+    expect(() => getSolvedCalendarDays()).not.toThrow();
+    expect(getSolvedCalendarDays()).toEqual([]);
+  });
+
+  it("survives a write failure (private mode, quota exceeded) without throwing", () => {
+    const setItem = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+      throw new Error("QuotaExceededError");
+    });
+    expect(() => recordSolve("2026-07-16", 1, "2026-07-16T10:00:00Z")).not.toThrow();
+    setItem.mockRestore();
     expect(getSolvedCalendarDays()).toEqual([]);
   });
 
