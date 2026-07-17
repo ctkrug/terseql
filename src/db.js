@@ -56,6 +56,11 @@ export async function createDatabase() {
  */
 export async function createSeededDatabase(setupSql) {
   const db = await createDatabase();
-  db.run(setupSql);
+  try {
+    db.run(setupSql);
+  } catch (err) {
+    db.close();
+    throw err;
+  }
   return db;
 }
