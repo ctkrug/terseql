@@ -326,8 +326,10 @@ export function createApp({
         sfx.play("fail");
         // Name the fixture, never its data — that's the hidden half of the
         // puzzle, and leaking it would hand over the edge case for free.
+        // fixtures[0] is the visible sample by position (schema.js's
+        // convention), not by the literal name "preview".
         results.showError(
-          verdict.failedFixture === "preview"
+          verdict.failedFixture === puzzle.fixtures[0].name
             ? "Wrong on the sample data you can see."
             : "Passes the sample, but fails a hidden case.",
         );

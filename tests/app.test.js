@@ -453,7 +453,7 @@ describe("submit", () => {
     expect($("#results").textContent).toContain("sample data you can see");
   });
 
-  it("keys the visible-vs-hidden message off fixtures[0], not the literal name \"preview\"", async () => {
+  it('keys the visible-vs-hidden message off fixtures[0], not the literal name "preview"', async () => {
     // schema.js documents the convention positionally ("index 0 may equal
     // the preview"); a magic-string check on the literal name "preview"
     // would silently mislabel a puzzle whose visible fixture is named
