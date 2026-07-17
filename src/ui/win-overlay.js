@@ -149,7 +149,7 @@ export function createWinOverlay(root, options = {}) {
       copyButton.type = "button";
       copyButton.addEventListener("click", async () => {
         const ok = await onCopyShare?.();
-        copyButton.textContent = ok === false ? "Copy failed" : "Copied!";
+        copyButton.textContent = ok === true ? "Copied!" : "Copy failed";
         clearTimeout(copyResetTimer);
         copyResetTimer = setTimeout(() => {
           copyButton.textContent = "Copy share card";
