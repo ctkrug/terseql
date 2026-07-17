@@ -31,14 +31,33 @@ function el(tag, className, text) {
  * decides what comes back, so a row containing markup is entirely reachable —
  * `SELECT '<img onerror=...>'` — and must render as the literal text it is.
  *
+ * The `aria-live` region is a short, dedicated status line — NOT the panel
+ * itself. A 200-row table is visible content, not an announcement: an
+ * `aria-live` region that contains the table queues the whole thing for a
+ * screen reader on every Run, which is unusable at any real row count. The
+ * body (table, error copy, empty/idle state) renders outside the live
+ * region; only a one-line summary is ever announced.
+ *
  * @param {HTMLElement} root
  */
 export function createResultPanel(root) {
   if (!root) throw new Error("createResultPanel needs a root element");
 
+  const status = el("p", "visually-hidden");
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  root.append(status);
+
+  const body = el("div", "results-body");
+  root.append(body);
+
   function replace(...children) {
-    root.textContent = "";
-    root.append(...children);
+    body.textContent = "";
+    body.append(...children);
+  }
+
+  function announce(text) {
+    status.textContent = text;
   }
 
   function state(name) {
@@ -49,6 +68,7 @@ export function createResultPanel(root) {
     /** Before the first run. */
     showIdle() {
       state("idle");
+      announce("");
       const wrap = el("div", "panel-state");
       wrap.append(
         el("p", "panel-state-title", "Nothing run yet"),
@@ -63,6 +83,7 @@ export function createResultPanel(root) {
 
     showRunning() {
       state("running");
+      announce("Running…");
       replace(el("p", "panel-state-title", "Running…"));
     },
 
@@ -72,6 +93,7 @@ export function createResultPanel(root) {
      */
     showEmpty() {
       state("empty");
+      announce("0 rows");
       const wrap = el("div", "panel-state");
       wrap.append(
         el("p", "panel-state-title", "0 rows"),
@@ -110,19 +132,15 @@ export function createResultPanel(root) {
 
       table.append(thead, tbody);
 
-      const children = [table];
       const total = result.values.length;
       const shown = rows.length;
-      children.push(
-        el(
-          "p",
-          "result-meta",
-          total > shown
-            ? `${shown} of ${total} rows shown`
-            : `${total} ${total === 1 ? "row" : "rows"}`,
-        ),
-      );
-      replace(...children);
+      const summary =
+        total > shown
+          ? `${shown} of ${total} rows shown`
+          : `${total} ${total === 1 ? "row" : "rows"}`;
+
+      announce(summary);
+      replace(table, el("p", "result-meta", summary));
     },
 
     /**
@@ -132,11 +150,10 @@ export function createResultPanel(root) {
      */
     showError(message) {
       state("error");
+      const text = String(message || "Unknown error");
+      announce(`SQLite says no: ${text}`);
       const wrap = el("div", "panel-state panel-state-error");
-      wrap.append(
-        el("p", "panel-state-title", "SQLite says no"),
-        el("p", "panel-error-message", String(message || "Unknown error")),
-      );
+      wrap.append(el("p", "panel-state-title", "SQLite says no"), el("p", "panel-error-message", text));
       replace(wrap);
     },
 

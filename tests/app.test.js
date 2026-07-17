@@ -115,9 +115,13 @@ describe("createApp", () => {
     expect($("#results").textContent).toContain("Nothing run yet");
   });
 
-  it("marks the results panel as a live region", () => {
+  it("gives the results panel a short live-region status, not the whole panel", () => {
+    // A screen reader queuing an up-to-200-row table on every Run is
+    // unusable — only a dedicated short summary node is announced.
     const { $ } = mount();
-    expect($("#results").getAttribute("aria-live")).toBe("polite");
+    const status = $("#results").querySelector('[aria-live="polite"]');
+    expect(status).not.toBeNull();
+    expect($("#results").getAttribute("aria-live")).toBeNull();
   });
 
   it("warms the WASM engine at mount, before the player's first Run", () => {

@@ -141,7 +141,7 @@ function markup(dateLabel) {
           </div>
         </div>
 
-        <div class="results panel" id="results" role="status" aria-live="polite"></div>
+        <div class="results panel" id="results"></div>
       </section>
 
       <aside class="col-board panel" id="board" aria-label="Today's leaderboard"></aside>

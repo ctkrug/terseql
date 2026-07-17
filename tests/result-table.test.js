@@ -91,6 +91,33 @@ describe("createResultPanel", () => {
     expect(root.querySelector(".result-meta").textContent).toBe("200 of 5000 rows shown");
   });
 
+  const liveRegion = () => root.querySelector('[aria-live="polite"]');
+
+  it("announces a short summary, never the table itself", () => {
+    // A live region that contains the table queues the whole thing for a
+    // screen reader on every Run — unusable past a handful of rows.
+    const values = Array.from({ length: 5000 }, (_, i) => [i]);
+    panel.showResult({ columns: ["n"], values });
+
+    expect(liveRegion().textContent).toBe("200 of 5000 rows shown");
+    expect(liveRegion().textContent).not.toContain("<table");
+    expect(liveRegion().querySelector("table")).toBeNull();
+  });
+
+  it("announces state changes for idle, running, empty and error too", () => {
+    panel.showRunning();
+    expect(liveRegion().textContent).toBe("Running…");
+
+    panel.showEmpty();
+    expect(liveRegion().textContent).toBe("0 rows");
+
+    panel.showError("near \"SELCT\": syntax error");
+    expect(liveRegion().textContent).toContain("SELCT");
+
+    panel.showIdle();
+    expect(liveRegion().textContent).toBe("");
+  });
+
   it("renders text as text — a query can return markup and must not run it", () => {
     // Reachable with `SELECT '<img src=x onerror=alert(1)>'`.
     const payload = '<img src=x onerror="alert(1)">';
