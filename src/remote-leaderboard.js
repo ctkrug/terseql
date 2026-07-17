@@ -97,7 +97,7 @@ export function createLeaderboardClient({
         const reason = err?.name === "AbortError" ? UNAVAILABLE.TIMEOUT : UNAVAILABLE.NETWORK;
         return { ok: false, reason };
       }
-      if (!response.ok) return { ok: false, reason: UNAVAILABLE.SERVER, status: response.status };
+      if (!response.ok) return { ok: false, reason: UNAVAILABLE.SERVER };
       if (!readBody) return { ok: true, response };
       try {
         return { ok: true, response, body: await readBody(response) };
