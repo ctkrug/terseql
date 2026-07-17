@@ -110,6 +110,23 @@ describe("digit roll", () => {
     expect(rolling()).toHaveLength(0);
   });
 
+  it("does not leak the roll timer of a digit detached by a length change", () => {
+    // Golfing crosses digit-count boundaries constantly (126 -> 99 -> 101 ->
+    // 96). Each crossing rebuilds and detaches the old digit spans; a timer
+    // still keyed to a detached span is a leaked reference for the rest of
+    // the session, not just a cosmetic no-op.
+    vi.useFakeTimers();
+    const counter = createByteCounter(root, { prefersReducedMotion: () => false });
+    counter.setValue(15);
+    counter.setValue(16); // same length: schedules a roll timer for the "6"
+    expect(vi.getTimerCount()).toBe(1);
+
+    counter.setValue(100); // length change: must clear the stale timer, not orphan it
+    expect(vi.getTimerCount()).toBe(0);
+
+    vi.useRealTimers();
+  });
+
   it("updates instantly with no roll under prefers-reduced-motion", () => {
     const counter = createByteCounter(root, { prefersReducedMotion: () => true });
     counter.setValue(61);
