@@ -13,7 +13,7 @@
     "dev": "vite",
     "build": "node scripts/build-site.mjs",
     "build:app": "vite build",
-    "preview": "vite preview",
+    "preview": "vite preview --outDir dist",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
