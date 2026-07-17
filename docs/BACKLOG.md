@@ -226,3 +226,20 @@ All done in the same pass as 5.1–5.8:
 - [x] `remote-leaderboard.js:call` no longer returns the unread `status` field.
 - [x] `result-table.js` now exposes `destroy()` (cancels the pending flash timer), and
       `app.js`'s `destroy()` calls it alongside its sibling components.
+
+## Known defects (found at the third closeout)
+
+- [x] **6.1 — `npm run preview` served the app at `/` and never the landing page** — fixed.
+  - `vite preview` defaults to `vite.config.js`'s `outDir`, which is `dist/app` — the app, not
+    the site. So the documented "landing at `/`, app at `/app/`" was wrong on both counts: `/`
+    served the app, `/app/` fell back to the app's own `index.html`, and that fallback's
+    relative `./assets/*` resolved under `/app/` where nothing exists, leaving a blank page and
+    a 404 in the console. Only the *preview* command was affected; `npm run build` and the
+    deployed `dist/` were always correct, which is why the suite never noticed.
+  - Fixed by running preview against the assembled site root (`vite preview --outDir dist`).
+    Regression test: `tests/build-config.test.js` ("points preview at the site root, so the
+    landing page is reachable at /"), which pins the site-root-vs-app-outDir split that caused
+    it.
+  - **Verified in a real browser, not just by status code:** the landing page, the CTA into the
+    app, and a full Run against the real WASM engine all work from `/`, and separately from a
+    `/terseql/` subpath mirroring the production URL.
