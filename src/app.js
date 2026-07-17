@@ -306,14 +306,14 @@ export function createApp({
     if (grading) return;
 
     const token = ++latestRequest;
+    // A Run started after this Submit owns the panel now; the grade still
+    // counts, it just doesn't get to repaint what the player moved on to.
+    const stillOwnsPanel = () => token === latestRequest;
     grading = true;
     submitButton.disabled = true;
     submitButton.textContent = "Grading…";
     try {
       const verdict = await grade(sql, puzzle);
-      // A Run started after this Submit owns the panel now; the grade still
-      // counts, it just doesn't get to repaint what the player moved on to.
-      const stillOwnsPanel = () => token === latestRequest;
 
       if (!verdict.correct) {
         if (!stillOwnsPanel()) return;
@@ -365,6 +365,16 @@ export function createApp({
           .submit({ puzzleId: puzzle.id, bytes: verdict.bytes, timestamp: now.toISOString() })
           .then(() => refreshBoard())
           .catch(() => {});
+      }
+    } catch (err) {
+      // The engine failed, not the player's query — this is not a verdict,
+      // so it gets Run's treatment (executeQuery catches everything and
+      // degrades to a designed error panel) instead of an unhandled
+      // rejection escaping the click handler.
+      if (stillOwnsPanel()) {
+        results.showError(err?.message ?? "Something went wrong grading this query.");
+        results.flash("fail");
+        sfx.play("fail");
       }
     } finally {
       grading = false;

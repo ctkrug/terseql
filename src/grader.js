@@ -48,7 +48,17 @@ export function resultSetsEqual(actual, expected) {
  * result exactly.
  */
 export async function runAgainstFixture(query, fixture) {
-  const db = await createSeededDatabase(fixture.setupSql);
+  let db;
+  try {
+    db = await createSeededDatabase(fixture.setupSql);
+  } catch (err) {
+    // The engine failed to load, not the player's query — a distinct error
+    // so callers can tell "your SQL is wrong" apart from "the grader is
+    // broken" instead of the two collapsing into one silent rejection.
+    throw new Error(`Could not prepare the "${fixture.name}" fixture: ${err?.message ?? err}`, {
+      cause: err,
+    });
+  }
   try {
     const result = db.exec(query);
     const actual = result[0] ?? { columns: [], values: [] };

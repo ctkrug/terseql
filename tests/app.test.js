@@ -453,13 +453,21 @@ describe("submit", () => {
     expect($("#results").textContent).toContain("sample data you can see");
   });
 
-  it("re-enables the submit button even when grading throws", async () => {
-    const { $, app } = mount({ grade: () => Promise.reject(new Error("engine died")) });
+  it("shows a designed error state and re-enables the button when grading throws", async () => {
+    // executeQuery (Run) catches everything and degrades to a designed error
+    // panel. grade() rejecting — the engine itself failing, not the query
+    // being wrong — must get the same treatment from Submit: no unhandled
+    // rejection escaping the click handler, no button stuck on "Grading…".
+    const sfx = silentSfx();
+    const { $, app } = mount({ sfx, grade: () => Promise.reject(new Error("engine died")) });
 
     $("#query").value = "SELECT 1";
-    await expect(app.submit()).rejects.toThrow("engine died");
+    await expect(app.submit()).resolves.toBeUndefined();
+
+    expect($("#results").dataset.state).toBe("error");
     expect($("#submit").disabled).toBe(false);
     expect($("#submit").textContent).toBe("Submit");
+    expect(sfx.play).toHaveBeenCalledWith("fail");
   });
 
   it("submits on Ctrl+Shift+Enter", async () => {
@@ -562,26 +570,6 @@ describe("submit", () => {
 
     expect($("#win").hidden).toBe(false);
     expect(JSON.parse(localStorage.getItem("terseql:results"))[dayOne.id].bytes).toBe(61);
-  });
-
-  it("shows a designed error state, not a silent button flip, when the engine fails to grade", async () => {
-    // executeQuery (Run) catches everything and degrades to a designed error
-    // panel. grade() rejecting (the WASM engine itself failing, not the
-    // query being wrong) must get the same treatment from Submit, not an
-    // unhandled rejection with "Grading…" silently reverting to "Submit".
-    const sfx = silentSfx();
-    const { $, app } = mount({
-      sfx,
-      grade: () => Promise.reject(new Error("wasm fetch failed")),
-    });
-
-    $("#query").value = "SELECT 1";
-    await expect(app.submit()).resolves.toBeUndefined();
-
-    expect($("#results").dataset.state).toBe("error");
-    expect($("#submit").disabled).toBe(false);
-    expect($("#submit").textContent).toBe("Submit");
-    expect(sfx.play).toHaveBeenCalledWith("fail");
   });
 });
 

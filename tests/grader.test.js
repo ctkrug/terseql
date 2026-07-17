@@ -122,7 +122,7 @@ describe("runAgainstFixture against a failing engine", () => {
     const close = vi.fn();
     createSeededDatabase.mockResolvedValueOnce({
       exec: () => {
-        throw new Error("near \"SELCT\": syntax error");
+        throw new Error('near "SELCT": syntax error');
       },
       close,
     });
