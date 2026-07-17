@@ -102,6 +102,12 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
 - **The win overlay's focus trap is hand-rolled, not `<dialog>`/`showModal()`.** This project's
   jsdom test environment doesn't implement `showModal` at all, so a native dialog couldn't be
   covered by the suite. Tab/Shift+Tab wrap manually at the overlay's first/last controls instead.
+- **The site is `dist/`; the app is only `dist/app/`.** Vite's `outDir` is the *app's* directory,
+  so every vite command defaults one level below the thing that actually ships — which is how
+  `vite preview` came to serve the app at `/` and leave the landing page unreachable (defect
+  6.1). Anything that serves or deploys the site must name `dist` explicitly. `tests/build-config.test.js`
+  pins that split, and `scripts/build-site.mjs` owns `dist/` as a whole because a bare
+  `vite build` only empties its own `outDir`.
 
 ## Testing
 
@@ -118,7 +124,7 @@ DOM-facing suites opt in per file with a `// @vitest-environment jsdom` docblock
 
 Coverage excludes `src/puzzles/day-*.js` (content, already held to the catalogue bar by the
 parametrized suite) and `src/main.js` (the bootstrap), so the number reports the logic that can
-actually be wrong: **99.0% of lines, 96.8% of branches** across 370 tests.
+actually be wrong: **99.0% of lines, 96.8% of branches** across 373 tests.
 
 Live-browser gotcha worth knowing before trusting a jsdom-only result: jsdom does not blur a
 focused element when it's disabled, but real browsers do. `app.js`'s Submit flow disables its
