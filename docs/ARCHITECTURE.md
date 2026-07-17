@@ -102,7 +102,7 @@ import.meta.url)` looks correct but Vite statically rewrites that exact pattern 
 - **The win overlay's focus trap is hand-rolled, not `<dialog>`/`showModal()`.** This project's
   jsdom test environment doesn't implement `showModal` at all, so a native dialog couldn't be
   covered by the suite. Tab/Shift+Tab wrap manually at the overlay's first/last controls instead.
-- **The site is `dist/`; the app is only `dist/app/`.** Vite's `outDir` is the *app's* directory,
+- **The site is `dist/`; the app is only `dist/app/`.** Vite's `outDir` is the _app's_ directory,
   so every vite command defaults one level below the thing that actually ships — which is how
   `vite preview` came to serve the app at `/` and leave the landing page unreachable (defect
   6.1). Anything that serves or deploys the site must name `dist` explicitly. `tests/build-config.test.js`
