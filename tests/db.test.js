@@ -19,6 +19,19 @@ describe("createSeededDatabase", () => {
     expect(result.values).toEqual([[6]]);
     db.close();
   });
+
+  it("closes the database if the setup SQL throws, instead of leaking it", async () => {
+    // A fixture with broken setupSql (a puzzle-authoring mistake) must not
+    // leak the WASM-backed database it already allocated before failing.
+    const probe = await createDatabase();
+    const DatabaseClass = probe.constructor;
+    probe.close();
+
+    const closeSpy = vi.spyOn(DatabaseClass.prototype, "close");
+    await expect(createSeededDatabase("NOT VALID SQL AT ALL (((")).rejects.toThrow();
+    expect(closeSpy).toHaveBeenCalledTimes(1);
+    closeSpy.mockRestore();
+  });
 });
 
 describe("engine load failure recovery", () => {
