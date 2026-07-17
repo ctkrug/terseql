@@ -19,8 +19,8 @@ function prefersReducedMotionByDefault() {
  * @param {HTMLElement} root
  * @param {Object} [options]
  * @param {() => boolean} [options.prefersReducedMotion]
- * @param {(name: string) => void} [options.onDigitChange] - fires when the
- *   rendered digits change, for the keystroke tick
+ * @param {(bytes: number) => void} [options.onDigitChange] - fires with the
+ *   new count when the rendered digits change, for the keystroke tick
  */
 export function createByteCounter(root, options = {}) {
   if (!root) throw new Error("createByteCounter needs a root element");
