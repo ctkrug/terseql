@@ -141,3 +141,101 @@ byte count fall as you trim the query.
     ever receives a one-line summary ("12 rows", the error text); the visible table renders
     outside it. Regression tests: `tests/result-table.test.js` ("announces a short summary,
     never the table itself").
+
+## Known defects (found at the second closeout)
+
+Every one below wants the same discipline as epic 4: a failing test that reproduces it first,
+then the fix, then the regression test named in the story.
+
+- [ ] **5.1 — One engine load failure bricks the session permanently**
+  - `db.js:loadSqlJs` memoizes `sqlJsPromise` including its _rejection_. If the ~660KB WASM
+    fetch fails once (a mobile blip, a CDN hiccup), every later `createDatabase()` re-returns
+    that same rejection for the life of the page. Nothing retries; only a reload recovers.
+  - `warmEngine()` makes this worse and its docstring is false: it promises "this is a head
+    start, not a dependency… if it fails, the first real query pays the cost and reports its
+    own error." Because it front-runs the load at mount and swallows the error, it is exactly
+    what can poison the cache before the player runs anything.
+  - Acceptance: a test where the first `initSqlJs` rejects and the second resolves proves a
+    subsequent `createDatabase()` succeeds. `warmEngine`'s comment matches what the code does.
+
+- [ ] **5.2 — Submit fails silently when the engine does; Run does not**
+  - `grader.js:runAgainstFixture` awaits `createSeededDatabase` _outside_ its try, so an engine
+    rejection propagates through `gradeQuery` into `submit()`, which has `try/finally` but no
+    `catch`. The `finally` restores the button, the rejection escapes the click handler
+    unhandled, and the player sees "Grading…" flip back to "Submit" with no message, forever.
+  - `executeQuery` catches everything, so Run degrades to a designed error state. The
+    asymmetry is backwards: the scored action is the unprotected one.
+  - Acceptance: with a failing engine, Submit renders a designed error state and raises no
+    unhandled rejection. `runAgainstFixture` closes its db on every path.
+
+- [ ] **5.3 — The byte counter retains detached digit spans and their timers**
+  - `byte-counter.js:render` rebuilds on a digit-length change with `root.textContent = ""`,
+    but never clears the pending timers keyed to the spans it just detached. The `timers` Map
+    holds dead nodes and their callbacks still fire against them. Crossing digit boundaries is
+    the normal shape of golfing (126 → 99 → 101 → 96), so it accumulates all session, in the
+    one component `docs/DESIGN.md` calls the signature detail.
+  - Acceptance: a test proves the Map does not grow across repeated length changes.
+
+- [ ] **5.4 — The leaderboard fetch timeout does not cover the response body**
+  - `remote-leaderboard.js:call` clears the abort timer in its `finally` and returns, but
+    `fetchTop` reads `await result.response.json()` after that. A server that sends headers and
+    then stalls the body never aborts and never times out; the board sits on "Loading today's
+    board…" forever. `timeoutMs` only really covers headers.
+  - Dormant at ship (no `VITE_LEADERBOARD_URL` is configured, so the client is disabled), which
+    is why it isn't a live bug today — and exactly why it should be fixed before 2.3 makes it
+    one. Same for 5.5 and 5.6.
+  - Acceptance: a fake backend that resolves headers but never the body resolves to `timeout`.
+
+- [ ] **5.5 — `refreshBoard()` has no request token, unlike `run`/`submit`**
+  - The mount-time `refreshBoard()` can still be in flight when a fast solve fires the
+    post-submit one; responses can land out of order and the stale one paints last. This is the
+    race `latestRequest` already solves for the results panel — the board just never got it.
+  - Acceptance: a test where an early, slower board fetch cannot overwrite a later one.
+
+- [ ] **5.6 — `data-reason` is never cleared, so the panel state desyncs**
+  - `leaderboard-panel.js:showUnavailable` sets `root.dataset.reason`; `showLoading`,
+    `showEntries` and `showEmpty` never clear it. An offline refresh followed by a good one
+    leaves `data-state="entries" data-reason="network"` — an attribute contradicting the state,
+    and a trap for any CSS or test keyed to it.
+  - Acceptance: reason is absent in every state that isn't "unavailable".
+
+- [ ] **5.7 — The win overlay claims modality it does not implement**
+  - `win-overlay.js` sets `aria-modal="true"` but there is no focus trap and the background is
+    not inert, so Tab walks straight out into the editor behind an overlay still covering the
+    page. `aria-modal` promises assistive tech precisely the thing that isn't true. It also
+    hardcodes the global id `win-title`.
+  - A native `<dialog>` + `showModal()` would provide the trap, Escape handling and inertness,
+    and would retire the manual `onKeydown`. Worth doing rather than hand-rolling a trap.
+  - Acceptance: focus cannot leave the open overlay by keyboard; Escape still closes it and
+    restores focus to the editor (the existing behaviour, kept).
+
+- [ ] **5.8 — Two behaviours silently depend on an unenforced fixture invariant**
+  - Every puzzle duplicates `previewSetupSql` verbatim into `fixtures[0].setupSql` and names
+    that fixture `"preview"`. Nothing enforces either half, and two things quietly rely on it:
+    `app.js` picks the "wrong on the sample you can see" vs "fails a hidden case" message by
+    comparing `failedFixture === "preview"` (a magic string, while `schema.js` defines the
+    convention _positionally_), and the passing-submit re-run only paints when `preview.ok` —
+    if the two ever diverge, a passing Submit flashes green over a stale "Running…", which is
+    defect 4.2 returning through the back door.
+  - Acceptance: the invariant is enforced (a test asserting `previewSetupSql` equals
+    `fixtures[0].setupSql` for every puzzle, or the fixture derives from it), and the visible
+    vs hidden message keys off `fixtures[0]` rather than the name `"preview"`.
+
+### Cleanups worth doing in the same pass
+
+- `el(tag, className, text)` is duplicated verbatim in `ui/leaderboard-panel.js`,
+  `ui/result-table.js` and `ui/win-overlay.js`; `prefersReducedMotionByDefault()` is duplicated
+  between `ui/byte-counter.js` and `ui/win-overlay.js`. Extract a `ui/dom.js`.
+- `audio.js:toggleMute` uses `this` inside an object literal whose every other member closes
+  over module scope, so `const { toggleMute } = sfx` breaks — in a module explicitly built to be
+  injected and destructured. Same shape in `result-table.js` and `leaderboard-panel.js`.
+- `db.js:createSeededDatabase` leaks the database if `run(setupSql)` throws (unguarded).
+- `win-overlay.js` reports "Copied!" when `onCopyShare` is absent (`undefined !== false`).
+  Prefer `ok === true ? "Copied!" : "Copy failed"`.
+- `app.js:BOARD_SIZE` and `remote-leaderboard.js:DEFAULT_LIMIT` are two constants for one
+  concept that must agree.
+- The editor hint advertises "⌘/Ctrl + Enter to run" but never mentions ⌘/Ctrl+Shift+Enter for
+  Submit — the scored action is the undiscoverable one.
+- `remote-leaderboard.js:call` returns a `status` field neither caller reads.
+- `result-table.js` has no `destroy()`, though `flash()` leaves a 600ms `setTimeout` against the
+  root; its two sibling components both expose one and `app.destroy()` calls them.
