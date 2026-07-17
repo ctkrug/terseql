@@ -152,24 +152,22 @@ export function createSfx({
     return ctx;
   }
 
+  function setMuted(next) {
+    muted = Boolean(next);
+    // Failing to persist must not fail the toggle: the player asked for
+    // silence now, and they get it even if it won't survive a reload.
+    try {
+      storage.set(MUTE_KEY, String(muted));
+    } catch {
+      /* storage unavailable */
+    }
+    return muted;
+  }
+
   return {
     isMuted: () => muted,
-
-    setMuted(next) {
-      muted = Boolean(next);
-      // Failing to persist must not fail the toggle: the player asked for
-      // silence now, and they get it even if it won't survive a reload.
-      try {
-        storage.set(MUTE_KEY, String(muted));
-      } catch {
-        /* storage unavailable */
-      }
-      return muted;
-    },
-
-    toggleMute() {
-      return this.setMuted(!muted);
-    },
+    setMuted,
+    toggleMute: () => setMuted(!muted),
 
     /** True once a context exists — i.e. after the first successful play. */
     isReady: () => Boolean(ctx),
