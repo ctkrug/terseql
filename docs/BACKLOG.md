@@ -234,7 +234,7 @@ All done in the same pass as 5.1–5.8:
     the site. So the documented "landing at `/`, app at `/app/`" was wrong on both counts: `/`
     served the app, `/app/` fell back to the app's own `index.html`, and that fallback's
     relative `./assets/*` resolved under `/app/` where nothing exists, leaving a blank page and
-    a 404 in the console. Only the *preview* command was affected; `npm run build` and the
+    a 404 in the console. Only the _preview_ command was affected; `npm run build` and the
     deployed `dist/` were always correct, which is why the suite never noticed.
   - Fixed by running preview against the assembled site root (`vite preview --outDir dist`).
     Regression test: `tests/build-config.test.js` ("points preview at the site root, so the
