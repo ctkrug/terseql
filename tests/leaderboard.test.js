@@ -4,6 +4,7 @@ import {
   computeStreak,
   getBest,
   getCurrentStreak,
+  getSolvedCalendarDays,
   getSolvedCount,
   getSolvedPuzzleIds,
   recordSolve,
@@ -173,6 +174,35 @@ describe("getSolvedPuzzleIds", () => {
     recordSolve("2026-07-16", 1, "x");
     recordSolve("2026-07-17", 1, "x");
     expect(getSolvedPuzzleIds()).toEqual(["2026-07-16", "2026-07-17", "2026-07-18"]);
+  });
+});
+
+describe("getSolvedCalendarDays", () => {
+  it("dedupes multiple solves that land on the same real day", () => {
+    // Distinct puzzle ids, same real calendar day (e.g. catching up on a
+    // missed puzzle and solving today's in the same sitting) — one day.
+    recordSolve("2026-07-15", 1, "2026-07-16T09:00:00Z");
+    recordSolve("2026-07-16", 1, "2026-07-16T10:00:00Z");
+    expect(getSolvedCalendarDays()).toEqual(["2026-07-16"]);
+  });
+
+  it("ignores a solvedAt that is not a real ISO date", () => {
+    recordSolve("2026-07-16", 1, "not-a-date");
+    expect(getSolvedCalendarDays()).toEqual([]);
+  });
+
+  it("survives a corrupted solved-days store instead of throwing", () => {
+    localStorage.setItem("terseql:solved-days", '"not-an-array"');
+    expect(() => getSolvedCalendarDays()).not.toThrow();
+    expect(getSolvedCalendarDays()).toEqual([]);
+  });
+
+  it("drops non-date entries from a hand-edited solved-days store", () => {
+    localStorage.setItem(
+      "terseql:solved-days",
+      JSON.stringify(["2026-07-16", 42, null, "garbage", "2026-07-17"]),
+    );
+    expect(getSolvedCalendarDays()).toEqual(["2026-07-16", "2026-07-17"]);
   });
 });
 
