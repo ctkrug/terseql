@@ -215,5 +215,5 @@ export function createSfx({
 /** The page's shared player. */
 export const sfx = createSfx();
 
-/** Names of every available voice — exported for tests and the mute UI. */
+/** Names of every available voice — exported so tests can drive each one. */
 export const VOICE_NAMES = Object.keys(VOICES);
