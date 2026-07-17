@@ -67,6 +67,9 @@ export function createLeaderboardPanel(root) {
 
   function replace(state, ...children) {
     root.dataset.state = state;
+    // Only showUnavailable's caller re-adds this — every other state must
+    // not carry a reason forward from whatever state came before it.
+    delete root.dataset.reason;
     root.textContent = "";
     root.append(...children);
   }
@@ -129,8 +132,8 @@ export function createLeaderboardPanel(root) {
       const wrap = el("div", "panel-state panel-state-muted");
       wrap.append(el("p", "panel-state-title", copy.title), el("p", "panel-state-hint", copy.hint));
 
-      root.dataset.reason = reason ?? "unknown";
       replace("unavailable", wrap, yourBestRow(yourBest));
+      root.dataset.reason = reason ?? "unknown";
     },
   };
 }
