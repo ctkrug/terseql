@@ -359,6 +359,23 @@ describe("submit", () => {
     expect($(".win-delta").textContent).toBe("First solve");
   });
 
+  it("returns focus to the editor once the win overlay closes, not wherever Submit left it", async () => {
+    // Real browsers blur a focused button the moment it's disabled — and
+    // submit() disables its button before grading even starts — so by the
+    // time win.show() runs, "whatever was last focused" can already be
+    // document.body. Verified live in Chromium; jsdom doesn't replicate the
+    // disable-blur, so this pins the fix's actual mechanism (app.js hands
+    // the editor to the overlay explicitly) rather than the browser quirk.
+    const { $, app } = mount({ grade: () => Promise.resolve(passing) });
+
+    $("#query").value = "SELECT 1";
+    $("#submit").focus();
+    await app.submit();
+    $(".win-close").click();
+
+    expect(document.activeElement).toBe($("#query"));
+  });
+
   it("paints the query's own result into the panel, not just idle plus a flash", async () => {
     // A bare Submit — no Run first — must not leave "Nothing run yet" behind
     // its own passing verdict; flash() is a decoration on real content, not a
