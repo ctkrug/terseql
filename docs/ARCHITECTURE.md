@@ -113,7 +113,7 @@ DOM-facing suites opt in per file with a `// @vitest-environment jsdom` docblock
 
 Coverage excludes `src/puzzles/day-*.js` (content, already held to the catalogue bar by the
 parametrized suite) and `src/main.js` (the bootstrap), so the number reports the logic that can
-actually be wrong: **98.8% of lines, 97.1% of branches** across 344 tests.
+actually be wrong: **98.9% of lines, 97.3% of branches** across 345 tests.
 
 ## Running it
 
