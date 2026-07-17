@@ -217,6 +217,9 @@ export function createApp({
   // whichever the player asked for last owns the panel, and anything older
   // that resolves late stays silent rather than painting over the answer.
   let latestRequest = 0;
+  // The board has the same shape of race: the mount-time refresh can still
+  // be in flight when a fast solve's post-submit refresh lands first.
+  let latestBoardRequest = 0;
 
   const win = createWinOverlay($("win"), {
     onCopyShare: async () => {
@@ -257,6 +260,7 @@ export function createApp({
   }
 
   async function refreshBoard() {
+    const token = ++latestBoardRequest;
     const yourBest = getBest(puzzle.id)?.bytes ?? null;
     if (!leaderboard.isEnabled()) {
       board.showUnavailable(UNAVAILABLE.NOT_CONFIGURED, { yourBest });
@@ -264,6 +268,7 @@ export function createApp({
     }
     board.showLoading();
     const response = await leaderboard.fetchTop(puzzle.id, BOARD_SIZE);
+    if (token !== latestBoardRequest) return;
     if (response.ok) board.showEntries(response.entries, { yourBest });
     else board.showUnavailable(response.reason, { yourBest });
   }
