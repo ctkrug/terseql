@@ -563,6 +563,26 @@ describe("submit", () => {
     expect($("#win").hidden).toBe(false);
     expect(JSON.parse(localStorage.getItem("terseql:results"))[dayOne.id].bytes).toBe(61);
   });
+
+  it("shows a designed error state, not a silent button flip, when the engine fails to grade", async () => {
+    // executeQuery (Run) catches everything and degrades to a designed error
+    // panel. grade() rejecting (the WASM engine itself failing, not the
+    // query being wrong) must get the same treatment from Submit, not an
+    // unhandled rejection with "Grading…" silently reverting to "Submit".
+    const sfx = silentSfx();
+    const { $, app } = mount({
+      sfx,
+      grade: () => Promise.reject(new Error("wasm fetch failed")),
+    });
+
+    $("#query").value = "SELECT 1";
+    await expect(app.submit()).resolves.toBeUndefined();
+
+    expect($("#results").dataset.state).toBe("error");
+    expect($("#submit").disabled).toBe(false);
+    expect($("#submit").textContent).toBe("Submit");
+    expect(sfx.play).toHaveBeenCalledWith("fail");
+  });
 });
 
 describe("leaderboard", () => {

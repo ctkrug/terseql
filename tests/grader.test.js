@@ -1,6 +1,13 @@
-import { describe, expect, it } from "vitest";
-import { byteLength, gradeQuery, resultSetsEqual } from "../src/grader.js";
+import { describe, expect, it, vi } from "vitest";
+import { byteLength, gradeQuery, resultSetsEqual, runAgainstFixture } from "../src/grader.js";
 import { dayOne } from "../src/puzzles/day-0001.js";
+
+vi.mock("../src/db.js", async (importOriginal) => {
+  const actual = await importOriginal();
+  return { ...actual, createSeededDatabase: vi.fn(actual.createSeededDatabase) };
+});
+
+import { createSeededDatabase } from "../src/db.js";
 
 describe("byteLength", () => {
   it("counts ASCII characters as one byte each", () => {
@@ -97,5 +104,30 @@ describe("gradeQuery against the day-0001 puzzle", () => {
   it("treats an empty query as incorrect with zero bytes", async () => {
     const result = await gradeQuery("   ", dayOne);
     expect(result).toEqual({ correct: false, bytes: 0, failedFixture: null });
+  });
+});
+
+describe("runAgainstFixture against a failing engine", () => {
+  it("rejects instead of leaving an unresolved promise when the engine can't load", async () => {
+    // createSeededDatabase is awaited before there's a db to run the query
+    // against or to close — the failure has to surface as a rejection, not
+    // vanish, so a caller (gradeQuery, then submit()) can react to it.
+    createSeededDatabase.mockRejectedValueOnce(new Error("wasm fetch failed"));
+    await expect(runAgainstFixture("SELECT 1", dayOne.fixtures[0])).rejects.toThrow(
+      /wasm fetch failed/,
+    );
+  });
+
+  it("still closes the database when the query itself throws", async () => {
+    const close = vi.fn();
+    createSeededDatabase.mockResolvedValueOnce({
+      exec: () => {
+        throw new Error("near \"SELCT\": syntax error");
+      },
+      close,
+    });
+    const passed = await runAgainstFixture("SELCT 1", dayOne.fixtures[0]);
+    expect(passed).toBe(false);
+    expect(close).toHaveBeenCalledTimes(1);
   });
 });
