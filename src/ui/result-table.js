@@ -153,7 +153,10 @@ export function createResultPanel(root) {
       const text = String(message || "Unknown error");
       announce(`SQLite says no: ${text}`);
       const wrap = el("div", "panel-state panel-state-error");
-      wrap.append(el("p", "panel-state-title", "SQLite says no"), el("p", "panel-error-message", text));
+      wrap.append(
+        el("p", "panel-state-title", "SQLite says no"),
+        el("p", "panel-error-message", text),
+      );
       replace(wrap);
     },
 

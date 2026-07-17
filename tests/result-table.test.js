@@ -111,7 +111,7 @@ describe("createResultPanel", () => {
     panel.showEmpty();
     expect(liveRegion().textContent).toBe("0 rows");
 
-    panel.showError("near \"SELCT\": syntax error");
+    panel.showError('near "SELCT": syntax error');
     expect(liveRegion().textContent).toContain("SELCT");
 
     panel.showIdle();
