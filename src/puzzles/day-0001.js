@@ -1,3 +1,14 @@
+const previewSetupSql = `
+  CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
+  CREATE TABLE orders (
+    id INTEGER PRIMARY KEY,
+    customer_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL
+  );
+  INSERT INTO customers VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
+  INSERT INTO orders VALUES (1, 1, 500), (2, 1, 200), (3, 2, 900);
+`;
+
 /** @type {import("./schema.js").Puzzle} */
 export const dayOne = {
   id: "2026-07-16",
@@ -13,16 +24,7 @@ export const dayOne = {
       amount INTEGER NOT NULL
     );
   `,
-  previewSetupSql: `
-    CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
-    CREATE TABLE orders (
-      id INTEGER PRIMARY KEY,
-      customer_id INTEGER NOT NULL,
-      amount INTEGER NOT NULL
-    );
-    INSERT INTO customers VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
-    INSERT INTO orders VALUES (1, 1, 500), (2, 1, 200), (3, 2, 900);
-  `,
+  previewSetupSql,
   referenceSql: `
     SELECT c.name, SUM(o.amount) AS total
     FROM customers c JOIN orders o ON o.customer_id = c.id
@@ -32,16 +34,10 @@ export const dayOne = {
   fixtures: [
     {
       name: "preview",
-      setupSql: `
-        CREATE TABLE customers (id INTEGER PRIMARY KEY, name TEXT NOT NULL);
-        CREATE TABLE orders (
-          id INTEGER PRIMARY KEY,
-          customer_id INTEGER NOT NULL,
-          amount INTEGER NOT NULL
-        );
-        INSERT INTO customers VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
-        INSERT INTO orders VALUES (1, 1, 500), (2, 1, 200), (3, 2, 900);
-      `,
+      // Deliberately the *same value* as previewSetupSql, not a retyped
+      // copy — app.js and the grader both rely on this fixture matching
+      // the preview exactly, and a copy can silently drift.
+      setupSql: previewSetupSql,
       expected: {
         columns: ["name", "total"],
         values: [

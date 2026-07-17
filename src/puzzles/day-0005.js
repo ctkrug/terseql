@@ -6,6 +6,11 @@ const SCHEMA = `
   );
 `;
 
+const PREVIEW_SETUP_SQL = `
+  ${SCHEMA}
+  INSERT INTO txns VALUES (1, 1, 100), (2, 2, 50), (3, 3, -30), (4, 4, 200);
+`;
+
 /** @type {import("./schema.js").Puzzle} */
 export const dayFive = {
   id: "2026-07-20",
@@ -14,10 +19,7 @@ export const dayFive = {
     "Return each transaction's day, amount, and the running balance — the sum of every " +
     "amount up to and including that day — ordered by day. Days are unique.",
   schemaSql: SCHEMA,
-  previewSetupSql: `
-    ${SCHEMA}
-    INSERT INTO txns VALUES (1, 1, 100), (2, 2, 50), (3, 3, -30), (4, 4, 200);
-  `,
+  previewSetupSql: PREVIEW_SETUP_SQL,
   referenceSql: `
     SELECT day, amount, SUM(amount) OVER (ORDER BY day) AS balance
     FROM txns
@@ -26,10 +28,10 @@ export const dayFive = {
   fixtures: [
     {
       name: "preview",
-      setupSql: `
-        ${SCHEMA}
-        INSERT INTO txns VALUES (1, 1, 100), (2, 2, 50), (3, 3, -30), (4, 4, 200);
-      `,
+      // Deliberately the *same value* as previewSetupSql, not a retyped
+      // copy — app.js and the grader both rely on this fixture matching
+      // the preview exactly, and a copy can silently drift.
+      setupSql: PREVIEW_SETUP_SQL,
       expected: {
         columns: ["day", "amount", "balance"],
         values: [

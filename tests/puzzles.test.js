@@ -28,6 +28,14 @@ describe.each(puzzles.map((p) => [p.id, p]))("puzzle %s", (_id, puzzle) => {
     expect(puzzle.fixtures.filter((f) => f.name !== "preview").length).toBeGreaterThanOrEqual(2);
   });
 
+  it("keeps fixtures[0] seeded identically to previewSetupSql", () => {
+    // app.js keys the "wrong on the sample" vs "fails a hidden case" message,
+    // and a passing Submit's repaint, off this positional invariant — an
+    // unenforced divergence here would let a passing grade silently fail to
+    // repaint the panel (defect 4.2 returning through the back door).
+    expect(puzzle.fixtures[0].setupSql).toBe(puzzle.previewSetupSql);
+  });
+
   it("uses its id as a valid ISO calendar date", () => {
     expect(puzzle.id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(Number.isNaN(Date.parse(`${puzzle.id}T00:00:00Z`))).toBe(false);

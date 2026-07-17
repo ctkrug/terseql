@@ -7,6 +7,12 @@ const SCHEMA = `
   );
 `;
 
+const PREVIEW_SETUP_SQL = `
+  ${SCHEMA}
+  INSERT INTO employees VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
+  INSERT INTO sales VALUES (1, 1, 300), (2, 1, 150), (3, 2, 500);
+`;
+
 /** @type {import("./schema.js").Puzzle} */
 export const dayThree = {
   id: "2026-07-18",
@@ -15,11 +21,7 @@ export const dayThree = {
     "Return every employee's name and their total sales — 0, not NULL, for anyone who " +
     "hasn't sold anything. Highest total first; break ties by name, A to Z.",
   schemaSql: SCHEMA,
-  previewSetupSql: `
-    ${SCHEMA}
-    INSERT INTO employees VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
-    INSERT INTO sales VALUES (1, 1, 300), (2, 1, 150), (3, 2, 500);
-  `,
+  previewSetupSql: PREVIEW_SETUP_SQL,
   referenceSql: `
     SELECT e.name, COALESCE(SUM(s.amount), 0) AS total
     FROM employees e LEFT JOIN sales s ON s.employee_id = e.id
@@ -29,11 +31,10 @@ export const dayThree = {
   fixtures: [
     {
       name: "preview",
-      setupSql: `
-        ${SCHEMA}
-        INSERT INTO employees VALUES (1, 'Ada'), (2, 'Grace'), (3, 'Alan');
-        INSERT INTO sales VALUES (1, 1, 300), (2, 1, 150), (3, 2, 500);
-      `,
+      // Deliberately the *same value* as previewSetupSql, not a retyped
+      // copy — app.js and the grader both rely on this fixture matching
+      // the preview exactly, and a copy can silently drift.
+      setupSql: PREVIEW_SETUP_SQL,
       expected: {
         columns: ["name", "total"],
         values: [

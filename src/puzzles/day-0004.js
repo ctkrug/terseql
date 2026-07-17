@@ -7,6 +7,15 @@ const SCHEMA = `
   );
 `;
 
+const PREVIEW_SETUP_SQL = `
+  ${SCHEMA}
+  INSERT INTO posts VALUES (1, 'Indexes'), (2, 'Joins'), (3, 'Windows');
+  INSERT INTO tags VALUES
+    (1, 1, 'sql'), (2, 1, 'perf'),
+    (3, 2, 'sql'), (4, 2, 'basics'),
+    (5, 3, 'sql'), (6, 3, 'perf');
+`;
+
 /** @type {import("./schema.js").Puzzle} */
 export const dayFour = {
   id: "2026-07-19",
@@ -15,14 +24,7 @@ export const dayFour = {
     "Return each tag used on two or more distinct posts, alongside the number of posts " +
     "using it. Most posts first; break ties by tag, A to Z.",
   schemaSql: SCHEMA,
-  previewSetupSql: `
-    ${SCHEMA}
-    INSERT INTO posts VALUES (1, 'Indexes'), (2, 'Joins'), (3, 'Windows');
-    INSERT INTO tags VALUES
-      (1, 1, 'sql'), (2, 1, 'perf'),
-      (3, 2, 'sql'), (4, 2, 'basics'),
-      (5, 3, 'sql'), (6, 3, 'perf');
-  `,
+  previewSetupSql: PREVIEW_SETUP_SQL,
   referenceSql: `
     SELECT tag, COUNT(DISTINCT post_id) AS posts
     FROM tags
@@ -33,14 +35,10 @@ export const dayFour = {
   fixtures: [
     {
       name: "preview",
-      setupSql: `
-        ${SCHEMA}
-        INSERT INTO posts VALUES (1, 'Indexes'), (2, 'Joins'), (3, 'Windows');
-        INSERT INTO tags VALUES
-          (1, 1, 'sql'), (2, 1, 'perf'),
-          (3, 2, 'sql'), (4, 2, 'basics'),
-          (5, 3, 'sql'), (6, 3, 'perf');
-      `,
+      // Deliberately the *same value* as previewSetupSql, not a retyped
+      // copy — app.js and the grader both rely on this fixture matching
+      // the preview exactly, and a copy can silently drift.
+      setupSql: PREVIEW_SETUP_SQL,
       expected: {
         columns: ["tag", "posts"],
         values: [

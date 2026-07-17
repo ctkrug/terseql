@@ -7,6 +7,12 @@ const SCHEMA = `
   );
 `;
 
+const PREVIEW_SETUP_SQL = `
+  ${SCHEMA}
+  INSERT INTO books VALUES (1, 'Dune'), (2, 'Neuromancer'), (3, 'Ubik');
+  INSERT INTO loans VALUES (1, 1, 20), (2, 1, 3), (3, 2, 14), (4, 3, 15);
+`;
+
 /** @type {import("./schema.js").Puzzle} */
 export const dayTwo = {
   id: "2026-07-17",
@@ -15,11 +21,7 @@ export const dayTwo = {
     "Return the title of every book that has been loaned out for more than 14 days at " +
     "least once, alphabetically, with each title appearing only once.",
   schemaSql: SCHEMA,
-  previewSetupSql: `
-    ${SCHEMA}
-    INSERT INTO books VALUES (1, 'Dune'), (2, 'Neuromancer'), (3, 'Ubik');
-    INSERT INTO loans VALUES (1, 1, 20), (2, 1, 3), (3, 2, 14), (4, 3, 15);
-  `,
+  previewSetupSql: PREVIEW_SETUP_SQL,
   referenceSql: `
     SELECT DISTINCT title
     FROM books JOIN loans ON loans.book_id = books.id
@@ -29,11 +31,10 @@ export const dayTwo = {
   fixtures: [
     {
       name: "preview",
-      setupSql: `
-        ${SCHEMA}
-        INSERT INTO books VALUES (1, 'Dune'), (2, 'Neuromancer'), (3, 'Ubik');
-        INSERT INTO loans VALUES (1, 1, 20), (2, 1, 3), (3, 2, 14), (4, 3, 15);
-      `,
+      // Deliberately the *same value* as previewSetupSql, not a retyped
+      // copy — app.js and the grader both rely on this fixture matching
+      // the preview exactly, and a copy can silently drift.
+      setupSql: PREVIEW_SETUP_SQL,
       expected: {
         columns: ["title"],
         values: [["Dune"], ["Ubik"]],
