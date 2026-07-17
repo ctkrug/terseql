@@ -319,6 +319,17 @@ describe("run", () => {
 describe("submit", () => {
   const passing = { correct: true, bytes: 61, failedFixture: null };
 
+  it("does nothing but reset to idle on an empty query", async () => {
+    const grade = vi.fn();
+    const { $, app } = mount({ grade });
+
+    $("#query").value = "   ";
+    await app.submit();
+
+    expect(grade).not.toHaveBeenCalled();
+    expect($("#results").dataset.state).toBe("idle");
+  });
+
   it("grades against every fixture, not just the preview", async () => {
     const grade = vi.fn(() => Promise.resolve(passing));
     const { $, app } = mount({ grade });
