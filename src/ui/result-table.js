@@ -64,6 +64,17 @@ export function createResultPanel(root) {
     root.dataset.state = name;
   }
 
+  function showEmpty() {
+    state("empty");
+    announce("0 rows");
+    const wrap = el("div", "panel-state");
+    wrap.append(
+      el("p", "panel-state-title", "0 rows"),
+      el("p", "panel-state-hint", "The query ran fine — it just matched nothing."),
+    );
+    replace(wrap);
+  }
+
   return {
     /** Before the first run. */
     showIdle() {
@@ -91,22 +102,13 @@ export function createResultPanel(root) {
      * A query that returned no rows at all — distinct from an error, and a
      * legitimate answer for some puzzles.
      */
-    showEmpty() {
-      state("empty");
-      announce("0 rows");
-      const wrap = el("div", "panel-state");
-      wrap.append(
-        el("p", "panel-state-title", "0 rows"),
-        el("p", "panel-state-hint", "The query ran fine — it just matched nothing."),
-      );
-      replace(wrap);
-    },
+    showEmpty,
 
     /**
      * @param {{columns: string[], values: any[][]}} result
      */
     showResult(result) {
-      if (!result || !result.columns?.length) return this.showEmpty();
+      if (!result || !result.columns?.length) return showEmpty();
 
       state("result");
       const table = el("table", "result-table");
