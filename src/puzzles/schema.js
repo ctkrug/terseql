@@ -7,7 +7,9 @@
 
 /**
  * @typedef {Object} Puzzle
- * @property {string} id - stable slug, e.g. "2026-07-16"
+ * @property {string} id - the UTC calendar date this puzzle is served on, ISO
+ *   `YYYY-MM-DD`, e.g. "2026-07-16". Not a free-form slug: rotation compares
+ *   and orders ids as dates, and the app renders one as the page's dateline.
  * @property {string} title
  * @property {string} prompt - plain-English goal shown to the player
  * @property {string} schemaSql - CREATE TABLE statements shown to the player as reference
@@ -18,8 +20,13 @@
  */
 
 /**
- * Minimal shape check for a puzzle definition — enough to catch a malformed
- * puzzle file at load time instead of failing confusingly mid-grade.
+ * Minimal shape check for a puzzle definition.
+ *
+ * This is a test-time gate, not a runtime one: `tests/puzzles.test.js` runs it
+ * over every puzzle in the registry, so a malformed puzzle file fails CI rather
+ * than reaching a player and failing confusingly mid-grade. Authoring a puzzle
+ * is a commit, so that's the moment to catch it.
+ *
  * @param {Puzzle} puzzle
  * @returns {string[]} list of problems; empty means the puzzle is well-formed
  */
